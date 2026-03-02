@@ -1,4 +1,5 @@
 game : {
+    board: {width: 8, height: 8},
     chest: {
         piece pawn: {
             direction : south,

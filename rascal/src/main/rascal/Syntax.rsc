@@ -27,21 +27,32 @@ layout Whitespace
 
 // ---------- Game syntax ----------
 start syntax Game
-  = "game" ":" "{" "chest" ":" Chest "," "actions" ":" Actions "}"
+  = "game" ":" "{" (GameProperty ("," GameProperty)*)? "}"
+  ;
+
+syntax GameProperty
+  = "chest"   ":" Chest
+  | "actions" ":" Actions
+  | "board"   ":" Board
   ;
 
 // TODO: Correct trailing comma handling in the syntax rules below
 // ---------- Pieces syntax ----------
 syntax Chest // chest as in pieces chest
-  = {Piece ";"}*
+  = "{" {Piece ","}* Piece? "}"
   ;
 
 syntax Piece
-  = "piece" ID ":" "{" { Movement "," }* "}"
+  = "piece" ID ":" "{" { Properties "," }* Properties? "}"
+  ;
+
+syntax Properties
+  = "direction" ":" FacingDirection
+  | "move" Movement
   ;
 
 syntax Movement
-  = "move" MoveID  ":" "{" {Direction ","}* "}"
+  = MoveID  ":" "{" Direction? ("," Direction)* "}"
   ;
 
 syntax Direction
@@ -51,14 +62,24 @@ syntax Direction
   | "right" Integer
   ;
 
+syntax FacingDirection
+  = "north"
+  | "south"
+  | "east"
+  | "west"
+  ;
 
 // ---------- Game syntax ----------
 syntax Actions
-  = "{" {Action ","}* "}"
+  = "["  { Action ","}* Action? "]"
   ;
 
 syntax Action
   = "action" ":" "{" "ID" ":" ID "," "move" ":" MoveID "}"
   ;
 
+
+syntax Board
+  = "{" "width" ":" Integer "," "height" ":" Integer "}"
+  ;
 
