@@ -4,12 +4,13 @@ import Syntax;
 import ParseTree;
 import IO;
 import Set;
+import String;
 
 // Parses the file with the game code and returns the parse tree
 Game parseGameFile(loc fileloc) {
   str s = readFile(fileloc);
   println("<s>");
-  Game tree = parse(#Game, s);
+  Game tree = parse(#Game, trim(s));
   checkGame(tree);
 
   return tree;
@@ -17,20 +18,20 @@ Game parseGameFile(loc fileloc) {
 
 Game parseGame(str input) {
   println("<input>");
-  Game tree = parse(#Game, input);
+  Game tree = parse(#Game, trim(input));
   checkGame(tree);
   return tree;
 }
 
 Chest parseChest(str input) {
-  Chest tree = parse(#Chest, input);
+  Chest tree = parse(#Chest, trim(input));
   return tree;
 }
 
 Chest parseChestFile(loc fileloc) {
   str s = readFile(fileloc);
   println("<s>");
-  return parse(#Chest, fileloc);
+  return parse(#Chest, trim(s));
 }
 
 
