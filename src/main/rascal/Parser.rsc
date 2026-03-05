@@ -1,7 +1,10 @@
 module Parser
 
+import Checks;
+import Model;
 import Syntax;
 import ParseTree;
+import ToModel;
 import IO;
 import Set;
 import String;
@@ -22,6 +25,18 @@ Game parseGame(str input) {
   checkGame(tree);
   return tree;
 }
+
+GameDef parseGameModelFile(loc fileloc)
+  = toModel(parseGameFile(fileloc));
+
+GameDef parseGameModel(str input)
+  = toModel(parseGame(input));
+
+list[SemanticError] checkGameModelFile(loc fileloc)
+  = checkSemantics(parseGameModelFile(fileloc));
+
+list[SemanticError] checkGameModel(str input)
+  = checkSemantics(parseGameModel(input));
 
 Chest parseChest(str input) {
   Chest tree = parse(#Chest, trim(input));
