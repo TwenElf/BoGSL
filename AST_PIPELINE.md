@@ -14,11 +14,15 @@ Pipeline:
 
 ## `Model.rsc`
 `Model.rsc` defines the core AST data types:
-- `GameDef(board, pieces, actions)`
+- `GameDef(board, pieces, actions, flow, rules, players)`
 - `BoardDef(width, height)`
 - `PieceDef(name, directions, moves)`
 - `MoveDef(name, steps)`
 - `ActionDef(pieceId, moveId)`
+- `FlowDef` (`flowDef(startState, endState, states)`)
+- `StateDef(name, transitions)`
+- `TransitionDef(event, toState)`
+- `RuleDef` (`gameRuleDef(ruleId)`, `pieceRuleDef(pieceId, ruleId)`)
 - `Facing` (`northFacing`, `southFacing`, `eastFacing`, `westFacing`)
 - `Step` (`forwardStep`, `backwardStep`, `leftStep`, `rightStep`)
 
@@ -34,12 +38,18 @@ Main entrypoint:
 - `toModel(Game gameTree) -> GameDef`
 
 What it does:
-- extracts first `Board`, `Chest`, and `Actions` subtree
+- extracts first `Board`, `Chest`, `Actions`, and `Players` subtree
+- extracts required `Flow` subtree
+- extracts game-wide rules from top-level `GameRuleProperty` (`rule: <ID>`)
+- extracts piece-wide rules from `PieceRuleProperty` inside each piece (`rule: <ID>`)
 - maps board integers to `BoardDef`
 - maps every `Piece` to `PieceDef`
 - maps `FacingDirection` to `Facing`
 - maps `Movement` and `Direction` to `MoveDef` and `Step`
 - maps each `Action` to `ActionDef`
+- maps each `FlowState` to `StateDef`
+- maps each state transition edge (`event -> target`) to `TransitionDef`
+- maps game-wide and piece-wide rule properties to `RuleDef`
 - throws explicit conversion errors when required parse-tree parts are missing
 
 What it intentionally does not do:
@@ -59,8 +69,18 @@ Current checks:
 - missing piece direction (`MissingPieceDirection`)
 - multiple piece directions (`MultiplePieceDirections`)
 - duplicate move IDs inside one piece (`DuplicateMove`)
+- missing player declarations (`MissingPlayers`)
+- duplicate players (`DuplicatePlayer`)
 - action points to unknown piece (`UnknownActionPiece`)
 - action points to unknown move for an existing piece (`UnknownActionMove`)
+- duplicate flow states (`DuplicateFlowState`)
+- duplicate flow transitions (`DuplicateFlowTransition`)
+- unknown flow start/end states (`UnknownFlowStart`, `UnknownFlowEnd`)
+- unknown flow transition targets (`UnknownFlowTransitionTarget`)
+- unreachable flow end state (`UnreachableFlowEnd`)
+- duplicate game-wide rules (`DuplicateGameRule`)
+- duplicate piece-wide rules per piece (`DuplicatePieceRule`)
+- piece-wide rules that target unknown pieces (`UnknownPieceRulePiece`)
 
 ## Parser API integration
 `Parser.rsc` exposes AST and semantic-check helpers:
@@ -81,9 +101,10 @@ In Rascal REPL:
 ```rascal
 import Parser;
 
-g = parseGameModelFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame2.dsl|);
-errs = checkGameModelFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame2.dsl|);
+g = parseGameModelFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame3.dsl|);
+errs = checkGameModelFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame3.dsl|);
 ```
 
 `g` contains the normalized game model.
 `errs` contains all semantic errors found in that model.
+Use `exampleGame3.dsl` for a chess-like sample covering node-based flow, one game rule, and `enPassant` as a piece rule on `pawn`.

@@ -12,6 +12,7 @@ A grid-based board game specific language (DSL), created for the Software Langua
 - `src/main/rascal/Checks.rsc` (semantic validations on AST)
 - `src/main/rascal/exampleGame.dsl`
 - `src/main/rascal/exampleGame2.dsl`
+- `src/main/rascal/exampleGame3.dsl` (chess-like demo)
 
 ## Build
 Run from repository root:
@@ -25,16 +26,17 @@ In a Rascal REPL:
 
 ```rascal
 import Parser;
-parseGameFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame2.dsl|);
+parseGameFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame3.dsl|);
 ```
 
-`exampleGame2.dsl` is the valid end-to-end example.
+`exampleGame2.dsl` and `exampleGame3.dsl` are valid end-to-end examples.
+`exampleGame3.dsl` is a chess-like demo (white/black turn loop, one game rule, and one piece rule: `enPassant` on `pawn`).
 `exampleGame.dsl` is currently intentionally incomplete for structural-check testing (it misses `board`), so `parseGameFile` throws `"No board defined"`.
 
 `parseGameFile` and `parseGame` both:
 - trim input before parsing
 - parse with start symbol `Game`
-- enforce one `board`, one `chest`, and one `actions` via `checkGame`
+- enforce one `board`, one `chest`, one `actions`, one `players`, and one `flow` via `checkGame`
 
 ## AST and semantic checks
 BoGSL uses an AST layer to separate parsing from game semantics.
@@ -54,8 +56,8 @@ From a Rascal REPL:
 ```rascal
 import Parser;
 
-g = parseGameModelFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame2.dsl|);
-errs = checkGameModelFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame2.dsl|);
+g = parseGameModelFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame3.dsl|);
+errs = checkGameModelFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame3.dsl|);
 ```
 
 `g` is a `GameDef` AST value and `errs` is a list of semantic errors.
@@ -71,10 +73,13 @@ The start symbol is `Game`.
   - `board: Board`
   - `chest: Chest`
   - `actions: Actions`
+  - `players: Players`
+  - `flow: Flow`
+  - `rule: <ID>` (game-wide rule)
 
 Note:
 - The grammar allows properties in any order.
-- The parser checker enforces exactly one `board`, one `chest`, and one `actions`.
+- The parser checker enforces exactly one `board`, one `chest`, one `actions`, one `players`, and one `flow`.
 
 ### `Board` is composed of
 - `{ width: Integer, height: Integer }`
@@ -82,6 +87,15 @@ Note:
 Example:
 ```dsl
 board: {width: 8, height: 8}
+```
+
+### `Players` is composed of
+- `[ <ID>, <ID>, ... ]`
+- supports empty list (`[]`) and optional trailing comma
+
+Example:
+```dsl
+players: [alice, bob]
 ```
 
 ### `Chest` is composed of
@@ -93,11 +107,13 @@ board: {width: 8, height: 8}
 - `Properties` are comma-separated and each property is:
   - `direction: FacingDirection`
   - `move Movement`
+  - `rule: <ID>` (piece-wide rule)
 
 Example:
 ```dsl
 piece pawn: {
   direction: south,
+  rule: pawnForwardOnly,
   move fwd: {forward 1},
   move fwd2: {forward 2}
 }
@@ -134,18 +150,73 @@ actions: [
 ]
 ```
 
+### `Flow` is composed of
+- `{ start: <ID>, end: <ID>, machine: Machine }`
+
+### `Machine` is composed of
+- `{ StateNode, StateNode, ... }`
+
+### `StateNode` is composed of
+- `state <ID>: { StateTransition, StateTransition, ... }`
+- transitions can be empty: `state gameOver: {}`
+
+### `StateTransition` is composed of
+- `<eventID> -> <targetStateID>`
+
+Example:
+```dsl
+flow: {
+  start: playerTurn,
+  end: gameOver,
+  machine: {
+    state playerTurn: {
+      endTurn -> resolveTurn
+    },
+    state resolveTurn: {
+      next -> playerTurn,
+      checkmate -> gameOver
+    },
+    state gameOver: {}
+  }
+}
+```
+
+### `GameRuleProperty` is composed of
+- `rule: <ID>`
+
+### `PieceRuleProperty` is composed of
+- `rule: <ID>`
+
+Examples:
+```dsl
+rule: boardBounds
+rule: oneActionPerTurn
+```
+
+```dsl
+piece pawn: {
+  direction: south,
+  rule: pawnForwardOnly,
+  rule: pawnCaptureDiagonally,
+  move advance1: {forward 1}
+}
+```
+
 ## Full example
 ```dsl
 game: {
+  players: [p1, p2],
   board: {width: 8, height: 8},
   chest: {
     piece pawn: {
       direction: south,
+      rule: pawnForwardOnly,
       move fwd: {forward 1},
       move fwd2: {forward 2}
     },
     piece horse: {
       direction: east,
+      rule: horseLMove,
       move fwdR: {forward 2, right 1},
       move rightDown: {backward 1, right 2},
       move none: {}
@@ -154,6 +225,24 @@ game: {
   actions: [
     action: {ID: pawn, move: fwd},
     action: {ID: horse, move: fwdR}
-  ]
+  ],
+  flow: {
+    start: playerTurn,
+    end: gameOver,
+    machine: {
+      state playerTurn: {
+        p1Move -> resolveTurn,
+        p2Move -> resolveTurn
+      },
+      state resolveTurn: {
+        nextP1 -> playerTurn,
+        nextP2 -> playerTurn,
+        gameEnds -> gameOver
+      },
+      state gameOver: {}
+    }
+  },
+  rule: mustMoveInBounds,
+  rule: oneActionPerTurn
 }
 ```
