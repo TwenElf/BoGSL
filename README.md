@@ -25,9 +25,11 @@ In a Rascal REPL:
 
 ```rascal
 import Parser;
-parseGameFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame.dsl|);
 parseGameFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame2.dsl|);
 ```
+
+`exampleGame2.dsl` is the valid end-to-end example.
+`exampleGame.dsl` is currently intentionally incomplete for structural-check testing (it misses `board`), so `parseGameFile` throws `"No board defined"`.
 
 `parseGameFile` and `parseGame` both:
 - trim input before parsing
