@@ -14,8 +14,16 @@ Game parseGameFile(loc fileloc) {
   str s = readFile(fileloc);
   Game tree = parse(#Game, trim(s));
   checkGame(tree);
-
   return tree;
+}
+
+GameDef parseCheckGameModelFile(loc fileloc){
+  GameDef game = parseGameModelFile(fileloc);
+  list[SemanticError] errors= checkSemantics(game);
+  if (  errors != []){
+      throw("Errors in game file <errors>");
+  }
+  return game;
 }
 
 Game parseGame(str input) {
