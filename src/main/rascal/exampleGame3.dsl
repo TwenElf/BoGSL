@@ -39,6 +39,6 @@ game: {
   actions: [
     action: {ID: pawn, move: advance1},
     action: {ID: pawn, move: enPassantCapture},
-    action: {ID: king, move: stepF}
+    action: {ID: king, move: stepB}
   ]
 }
