@@ -10,7 +10,7 @@ import Display;
 
 
 int main() {
-    loc filename = |cwd:///src/main/rascal/exampleGame3.dsl|;
+    loc filename = |cwd:///src/main/rascal/exampleGame4.dsl|;
     GameDef game = parseCheckGameModelFile(filename);
 
     GameplayState state = newGameplayState(game);

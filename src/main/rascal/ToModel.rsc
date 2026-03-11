@@ -288,15 +288,15 @@ ActionDef toActionDef(Action actionTree) {
 list[RuleDef] toGameRuleDefs(Game gameTree) {
   list[RuleDef] rules = [];
   visit(gameTree) {
-    case GameRuleProperty ruleTree: rules += [gameRuleDef(toRuleId(ruleTree))];
+    case Rule ruleTree: rules += [gameRuleDef(toRuleId(ruleTree), toRuleLogic(ruleTree))];
   }
   return rules;
 }
 
-str toRuleId(GameRuleProperty gameRuleTree) {
+str toRuleId(Rule gameRuleTree) {
   str ruleId = "";
   visit(gameRuleTree) {
-    case RuleName ruleNameTree: if (ruleId == "") ruleId = trim(unparse(ruleNameTree));
+    case RuleID ruleNameTree: if (ruleId == "") ruleId = trim(unparse(ruleNameTree));
   }
   if (ruleId == "") {
     throw "Game rule must define a rule ID";
@@ -304,10 +304,21 @@ str toRuleId(GameRuleProperty gameRuleTree) {
   return ruleId;
 }
 
+list[str] toRuleLogic(Rule gameRuleTree) {
+  list[str] logic = [];
+  visit(gameRuleTree) {
+    case RuleParts logicTree: logic += [trim(unparse(logicTree))];
+  }
+  if (logic == []) {
+    throw "Game rule must define logic";
+  }
+  return logic;
+}
+
 str toRuleId(PieceRuleProperty pieceRuleTree) {
   str ruleId = "";
   visit(pieceRuleTree) {
-    case RuleName ruleNameTree: if (ruleId == "") ruleId = trim(unparse(ruleNameTree));
+    case RuleID ruleNameTree: if (ruleId == "") ruleId = trim(unparse(ruleNameTree));
   }
   if (ruleId == "") {
     throw "Piece rule must define a rule ID";

@@ -43,7 +43,7 @@ data FlowDef
   ;
 
 data RuleDef
-  = gameRuleDef(str ruleId)
+  = gameRuleDef(str ruleId, list[str] logic)
   | pieceRuleDef(str pieceId, str ruleId)
   ;
 

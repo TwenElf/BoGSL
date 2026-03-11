@@ -39,7 +39,7 @@ syntax GameProperty
   | "actions" ":" Actions
   | "board"   ":" Board
   | "players" ":" Players
-  | GameRuleProperty
+  | "rules" ":" Rules
   | "flow"    ":" Flow
   ;
 
@@ -51,9 +51,6 @@ syntax PlayerName
   = ID
   ;
 
-syntax GameRuleProperty
-  = "rule" ":" RuleName
-  ;
 
 // ---------- Pieces syntax ----------
 syntax Chest // chest as in pieces chest
@@ -71,7 +68,7 @@ syntax Properties
   ;
 
 syntax PieceRuleProperty
-  = "rule" ":" RuleName
+  = "rule" ":" RuleID
   ;
 
 syntax Movement
@@ -147,10 +144,54 @@ syntax TransitionTarget
   = ID
   ;
 
+
+
 syntax Arrow
   = "-" "\>"
   ;
 
-syntax RuleName
+// ---------- Rules syntax ----------
+
+syntax Rules
+  = "{" Rule? ("," Rule)* "}"
+  ;
+
+syntax Rule
+  = "rule" RuleID ":"  RuleParts*
+  ;
+
+// syntax RuleProperties
+//   = "piece" RuleName ":" RuleParts*
+//   ;
+syntax RuleParts
+  = "move" "piece" "any"
+  | "other player"
+  | "piece" ID
+  | "boardsize" 
+  | "capture" ID
+  | "can"
+  | Loop
+  | Logicals
+  ;
+
+syntax Logicals
+  = "\>"
+  | "\<"
+  | "=="
+  | "!="
+  | "and"
+  | "or"
+  | "||"
+  | "&&"
+  | "\<="
+  | "\>="
+  | Arrow // reusing arrow for move to
+  ;
+
+syntax Loop
+  = "for" "(" ("each" | "all") "moves" "piece" ID ")"
+  ;
+
+syntax RuleID
   = ID
   ;
