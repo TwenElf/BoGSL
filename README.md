@@ -30,13 +30,13 @@ parseGameFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame3.dsl
 ```
 
 `exampleGame2.dsl` and `exampleGame3.dsl` are valid end-to-end examples.
-`exampleGame3.dsl` is a chess-like demo (white/black turn loop, one game rule, and one piece rule: `enPassant` on `pawn`).
+`exampleGame3.dsl` is a chess-like demo (white/black turn loop, one game rule, one piece rule: `enPassant` on `pawn`, and explicit per-piece placement).
 `exampleGame.dsl` is currently intentionally incomplete for structural-check testing (it misses `board`), so `parseGameFile` throws `"No board defined"`.
 
 `parseGameFile` and `parseGame` both:
 - trim input before parsing
 - parse with start symbol `Game`
-- enforce one `board`, one `chest`, one `actions`, one `players`, and one `flow` via `checkGame`
+- enforce one `board`, one `chest`, one `actions`, one `players`, one `pieces`, and one `flow` via `checkGame`
 
 ## AST and semantic checks
 BoGSL uses an AST layer to separate parsing from game semantics.
@@ -72,6 +72,7 @@ The start symbol is `Game`.
 - each `GameProperty` is one of:
   - `board: Board`
   - `chest: Chest`
+  - `pieces: PieceAssignments`
   - `actions: Actions`
   - `players: Players`
   - `flow: Flow`
@@ -79,7 +80,7 @@ The start symbol is `Game`.
 
 Note:
 - The grammar allows properties in any order.
-- The parser checker enforces exactly one `board`, one `chest`, one `actions`, one `players`, and one `flow`.
+- The parser checker enforces exactly one `board`, one `chest`, one `actions`, one `players`, one `pieces`, and one `flow`.
 
 ### `Board` is composed of
 - `{ width: Integer, height: Integer }`
@@ -98,6 +99,27 @@ Example:
 players: [alice, bob]
 ```
 
+### `PieceAssignments` is composed of
+- `{ <pieceID>: { type <pieceTypeID>, direction: FacingDirection, initialPosition: {x: Integer, y: Integer} }, ... }`
+- assignment properties can be comma-separated or newline-separated
+- `type` accepts both `type pawn` and `type: pawn`
+
+Example:
+```dsl
+pieces: {
+  whitePawnA: {
+    type pawn
+    direction: south
+    initialPosition: {x: 0, y: 1}
+  },
+  blackKing: {
+    type: king,
+    direction: north,
+    initialPosition: {x: 4, y: 7}
+  }
+}
+```
+
 ### `Chest` is composed of
 - `{ Piece, Piece, ... }`
 - supports empty chest (`{}`) and optional trailing comma
@@ -105,14 +127,12 @@ players: [alice, bob]
 ### `Piece` is composed of
 - `piece <ID>: { Properties... }`
 - `Properties` are comma-separated and each property is:
-  - `direction: FacingDirection`
   - `move Movement`
   - `rule: <ID>` (piece-wide rule)
 
 Example:
 ```dsl
 piece pawn: {
-  direction: south,
   rule: pawnForwardOnly,
   move fwd: {forward 1},
   move fwd2: {forward 2}
@@ -145,8 +165,8 @@ piece pawn: {
 Example:
 ```dsl
 actions: [
-  action: {ID: pawn, move: fwd},
-  action: {ID: horse, move: fwdR}
+  action: {ID: p1Pawn, move: fwd},
+  action: {ID: p1Horse, move: fwdR}
 ]
 ```
 
@@ -195,7 +215,6 @@ rule: oneActionPerTurn
 
 ```dsl
 piece pawn: {
-  direction: south,
   rule: pawnForwardOnly,
   rule: pawnCaptureDiagonally,
   move advance1: {forward 1}
@@ -206,16 +225,36 @@ piece pawn: {
 ```dsl
 game: {
   players: [p1, p2],
+  pieces: {
+    p1Pawn: {
+      type pawn
+      direction: south
+      initialPosition: {x: 0, y: 1}
+    },
+    p1Horse: {
+      type horse
+      direction: east
+      initialPosition: {x: 1, y: 0}
+    },
+    p2Pawn: {
+      type pawn
+      direction: north
+      initialPosition: {x: 0, y: 6}
+    },
+    p2Horse: {
+      type horse
+      direction: west
+      initialPosition: {x: 1, y: 7}
+    }
+  },
   board: {width: 8, height: 8},
   chest: {
     piece pawn: {
-      direction: south,
       rule: pawnForwardOnly,
       move fwd: {forward 1},
       move fwd2: {forward 2}
     },
     piece horse: {
-      direction: east,
       rule: horseLMove,
       move fwdR: {forward 2, right 1},
       move rightDown: {backward 1, right 2},
@@ -223,8 +262,8 @@ game: {
     }
   },
   actions: [
-    action: {ID: pawn, move: fwd},
-    action: {ID: horse, move: fwdR}
+    action: {ID: p1Pawn, move: fwd},
+    action: {ID: p1Horse, move: fwdR}
   ],
   flow: {
     start: playerTurn,

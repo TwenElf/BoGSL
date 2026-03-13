@@ -12,7 +12,7 @@ keyword KW
   = "game" | "chest" | "actions" | "board" | "piece" | "direction" | "move"
   | "north" | "south" | "east" | "west" | "forward" | "backward" | "left" | "right" | "action" | "ID"
   | "flow" | "start" | "end"
-  | "players" | "machine" | "state"
+  | "players" | "pieces" | "type" | "initialPosition" | "machine" | "state"
   | "rule"
   ;
 
@@ -39,6 +39,7 @@ syntax GameProperty
   | "actions" ":" Actions
   | "board"   ":" Board
   | "players" ":" Players
+  | "pieces" ":" PieceAssignments
   | GameRuleProperty
   | "flow"    ":" Flow
   ;
@@ -55,18 +56,60 @@ syntax GameRuleProperty
   = "rule" ":" RuleName
   ;
 
+syntax PieceAssignments
+  = "{" { PieceAssignment "," }* PieceAssignment? "}"
+  ;
+
+syntax PieceAssignment
+  = AssignedPiece ":" "{" PieceAssignmentProperties? "}"
+  ;
+
+syntax PieceAssignmentProperties
+  = PieceAssignmentProperty (","? PieceAssignmentProperty)*
+  ;
+
+syntax PieceAssignmentProperty
+  = TypeAssignmentProperty
+  | DirectionAssignmentProperty
+  | InitialPositionAssignmentProperty
+  ;
+
+syntax TypeAssignmentProperty
+  = "type" ":" AssignedPieceType
+  | "type" AssignedPieceType
+  ;
+
+syntax DirectionAssignmentProperty
+  = "direction" ":" FacingDirection
+  ;
+
+syntax InitialPositionAssignmentProperty
+  = "initialPosition" ":" InitialPosition
+  ;
+
+syntax InitialPosition
+  = "{" "x" ":" Integer "," "y" ":" Integer "}"
+  ;
+
+syntax AssignedPiece
+  = ID
+  ;
+
+syntax AssignedPieceType
+  = ID
+  ;
+
 // ---------- Pieces syntax ----------
 syntax Chest // chest as in pieces chest
   = "{" {Piece ","}* Piece? "}"
   ;
 
 syntax Piece
-  = "piece" ID ":" "{" { Properties "," }* Properties? "}"
+  = "piece" ID ":" "{" { PieceProperty "," }* PieceProperty? "}"
   ;
 
-syntax Properties
-  = "direction" ":" FacingDirection
-  | "move" Movement
+syntax PieceProperty
+  = "move" Movement
   | PieceRuleProperty
   ;
 

@@ -1,15 +1,35 @@
 game: {
   players: [p1, p2],
+  pieces: {
+    p1Pawn: {
+      type pawn
+      direction: south
+      initialPosition: {x: 0, y: 1}
+    },
+    p1Horse: {
+      type horse
+      direction: east
+      initialPosition: {x: 1, y: 0}
+    },
+    p2Pawn: {
+      type pawn
+      direction: north
+      initialPosition: {x: 0, y: 6}
+    },
+    p2Horse: {
+      type horse
+      direction: west
+      initialPosition: {x: 1, y: 7}
+    }
+  },
   board: {width: 8, height: 8},
   chest: {
     piece pawn: {
-      direction: south,
       rule: pawnForwardOnly,
       move fwd: {forward 1},
       move fwd2: {forward 2}
     },
     piece horse: {
-      direction: east,
       rule: horseLMove,
       move fwdR: {forward 2, right 1},
       move rightDown: {backward 1, right 2},
@@ -17,8 +37,8 @@ game: {
     }
   },
   actions: [
-    action: {ID: pawn, move: fwd},
-    action: {ID: horse, move: fwdR}
+    action: {ID: p1Pawn, move: fwd},
+    action: {ID: p1Horse, move: fwdR}
   ],
   flow: {
     start: playerTurn,

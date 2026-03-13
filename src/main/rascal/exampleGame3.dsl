@@ -1,5 +1,27 @@
 game: {
   players: [white, black],
+  pieces: {
+    whitePawnA: {
+      type pawn
+      direction: south
+      initialPosition: {x: 0, y: 1}
+    },
+    whiteKing: {
+      type king
+      direction: south
+      initialPosition: {x: 4, y: 0}
+    },
+    blackPawnA: {
+      type pawn
+      direction: north
+      initialPosition: {x: 0, y: 6}
+    },
+    blackKing: {
+      type king
+      direction: north
+      initialPosition: {x: 4, y: 7}
+    }
+  },
   board: {width: 8, height: 8},
   flow: {
     start: whiteTurn,
@@ -20,7 +42,6 @@ game: {
   rule: checkmateEndsGame,
   chest: {
     piece pawn: {
-      direction: south,
       rule: enPassant,
       move advance1: {forward 1},
       move firstMove: {forward 2},
@@ -29,7 +50,6 @@ game: {
       move enPassantCapture: {left 1, forward 1}
     },
     piece king: {
-      direction: north,
       move stepF: {forward 1},
       move stepB: {backward 1},
       move stepL: {left 1},
@@ -37,8 +57,8 @@ game: {
     }
   },
   actions: [
-    action: {ID: pawn, move: advance1},
-    action: {ID: pawn, move: enPassantCapture},
-    action: {ID: king, move: stepB}
+    action: {ID: whitePawnA, move: advance1},
+    action: {ID: blackPawnA, move: enPassantCapture},
+    action: {ID: whiteKing, move: stepB}
   ]
 }

@@ -19,7 +19,15 @@ data MoveDef
   ;
 
 data PieceDef
-  = pieceDef(str name, list[Facing] directions, list[MoveDef] moves)
+  = pieceDef(str name, list[MoveDef] moves)
+  ;
+
+data PositionDef
+  = positionDef(int x, int y)
+  ;
+
+data PieceAssignmentDef
+  = pieceAssignmentDef(str pieceId, str typeId, Facing direction, PositionDef initialPosition)
   ;
 
 data BoardDef
@@ -51,6 +59,7 @@ data GameDef
   = gameDef(
       BoardDef board,
       list[PieceDef] pieces,
+      list[PieceAssignmentDef] assignedPieces,
       list[ActionDef] actions,
       FlowDef flow,
       list[RuleDef] rules,

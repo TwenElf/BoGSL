@@ -11,18 +11,38 @@ data GameplayState
   = gameplayState(str flowState, map[str, PieceState] pieces)
   ;
 
-// Create a new `PieceState` at (0, 0)
-PieceState newPieceState(PieceDef piece) {
+// Create a new `PieceState` from a piece assignment and type definition.
+PieceState newPieceState(PieceAssignmentDef assignment, PieceDef pieceType) {
   map[str, list[Step]] moves
-    = (move.name: move.steps | MoveDef move <- piece.moves);
-  return pieceState(0, 0, piece.directions[0], moves);
+    = (move.name: move.steps | MoveDef move <- pieceType.moves);
+
+  switch (assignment) {
+    case pieceAssignmentDef(_, _, Facing direction, positionDef(int x, int y)):
+      return pieceState(x, y, direction, moves);
+  }
+
+  throw "Invalid piece assignment";
 }
 
 // Create a new `GameplayState`
 GameplayState newGameplayState(GameDef game) {
   str flowState = game.flow.startState;
-  map[str, PieceState] pieces
-    = (p.name: newPieceState(p) | PieceDef p <- game.pieces);
+
+  map[str, PieceDef] pieceTypes
+    = (piece.name: piece | PieceDef piece <- game.pieces);
+
+  map[str, PieceState] pieces = ();
+  for (assignment <- game.assignedPieces) {
+    switch (assignment) {
+      case pieceAssignmentDef(str pieceId, str typeId, _, _): {
+        if (!(typeId in pieceTypes)) {
+          throw "Assigned piece <pieceId> references unknown type <typeId>";
+        }
+        pieces[pieceId] = newPieceState(assignment, pieceTypes[typeId]);
+      }
+    }
+  }
+
   return gameplayState(flowState, pieces);
 }
 
