@@ -26,7 +26,7 @@ In a Rascal REPL:
 
 ```rascal
 import Parser;
-parseGameFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame3.dsl|);
+parseGameFile(|cwd:///src/main/rascal/exampleGame3.dsl|);
 ```
 
 `exampleGame2.dsl` and `exampleGame3.dsl` are valid end-to-end examples.
@@ -56,8 +56,8 @@ From a Rascal REPL:
 ```rascal
 import Parser;
 
-g = parseGameModelFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame3.dsl|);
-errs = checkGameModelFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame3.dsl|);
+g = parseGameModelFile(|cwd:///src/main/rascal/exampleGame3.dsl|);
+errs = checkGameModelFile(|cwd:///src/main/rascal/exampleGame3.dsl|);
 ```
 
 `g` is a `GameDef` AST value and `errs` is a list of semantic errors.
