@@ -5,7 +5,7 @@ A grid-based board game specific language (DSL), created for the Software Langua
 - `pom.xml`
 - `META-INF/RASCAL.MF`
 - `AST_PIPELINE.md` (AST architecture and module responsibilities)
-- `CONTSTRAINTS.md` (all current parser/conversion/semantic constraints)
+- `CONSTRAINTS.md` (all current parser/conversion/semantic constraints)
 - `FLOW.md` (flow state machine design notes)
 - `src/main/rascal/Syntax.rsc` (grammar)
 - `src/main/rascal/Parser.rsc` (parse entry points + structural and semantic check helpers)
@@ -36,7 +36,7 @@ parseGameFile(|cwd:///example/chess.dsl|);
 `parseGameFile` and `parseGame` both:
 - trim input before parsing
 - parse with start symbol `Game`
-- enforce one `board`, one `chest`, one `actions`, one `players`, and one `flow` via `checkGame`
+- enforce one `board`, one `chest`, one `players`, and one `flow`, with optional `actions` via `checkGame`
 
 ## AST and semantic checks
 BoGSL uses an AST layer to separate parsing from game semantics.
@@ -50,7 +50,7 @@ AST flow:
 
 Detailed module-by-module explanation:
 - [AST pipeline details](AST_PIPELINE.md)
-- [Current constraints list](CONTSTRAINTS.md)
+- [Current constraints list](CONSTRAINTS.md)
 - [Flow machine design](FLOW.md)
 
 From a Rascal REPL:
@@ -81,7 +81,8 @@ The start symbol is `Game`.
 
 Note:
 - The grammar allows properties in any order.
-- The parser checker enforces exactly one `board`, one `chest`, one `actions`, one `players`, and one `flow`.
+- The parser checker enforces exactly one `board`, one `chest`, one `players`, and one `flow`.
+- `actions` is optional (zero or one block allowed).
 
 ### `Board` is composed of
 - `{ width: Integer, height: Integer }`
@@ -92,12 +93,12 @@ board: {width: 8, height: 8}
 ```
 
 ### `Players` is composed of
-- `{ PlayerDefinition, PlayerDefinition, ... }`
-- supports empty players block (`{}`) and optional trailing comma
+- `[ PlayerDefinition, PlayerDefinition, ... ]`
+- supports empty players block (`[]`) and optional trailing comma
 
 Example:
 ```dsl
-players: {
+players: [
   id: alice,
   pieces: {
     aliceKing: {
@@ -114,7 +115,7 @@ players: {
       initialPosition: {x: 4, y: 7}
     }
   }
-}
+]
 ```
 
 ### `PlayerDefinition` is composed of
@@ -127,7 +128,7 @@ players: {
 
 Example:
 ```dsl
-players: {
+players: [
   id: white,
   pieces: {
     whitePawnA: {
@@ -141,12 +142,12 @@ players: {
       initialPosition: {x: 4, y: 0}
     }
   }
-}
+]
 ```
 
 ### `Chest` is composed of
-- `{ Piece, Piece, ... }`
-- supports empty chest (`{}`) and optional trailing comma
+- `[ Piece, Piece, ... ]`
+- supports empty chest (`[]`) and optional trailing comma
 
 ### `Piece` is composed of
 - `piece <ID>: { Properties... }`
@@ -191,38 +192,45 @@ Example:
 ```dsl
 actions: [
   action: {ID: p1Pawn, move: fwd},
-  action: {ID: p1Horse, move: fwdR}
+  action: {ID: p2Pawn, move: fwd}
 ]
 ```
 
 ### `Flow` is composed of
-- `{ start: <ID>, end: <ID>, machine: Machine }`
+- `{ start: <playerID>, end: gameOver, machine: Machine }`
+- runtime uses flow events:
+  - `moved` when the current player has at least one available move and executes one
+  - `noMoves` when the current player has no available move
+- available move computation (`availableMoves`) currently checks:
+  - move belongs to one of the current player's assigned pieces (using all moves defined by each piece type)
+  - target position is inside board limits
 
 ### `Machine` is composed of
-- `{ StateNode, StateNode, ... }`
+- `[ StateNode, StateNode, ... ]`
 
 ### `StateNode` is composed of
-- `state <ID>: { StateTransition, StateTransition, ... }`
+- `state <playerID | gameOver>: { StateTransition, StateTransition, ... }`
 - transitions can be empty: `state gameOver: {}`
 
 ### `StateTransition` is composed of
-- `<eventID> -> <targetStateID>`
+- `<moved|noMoves> -> <playerID|gameOver>`
 
 Example:
 ```dsl
 flow: {
-  start: playerTurn,
+  start: p1,
   end: gameOver,
-  machine: {
-    state playerTurn: {
-      endTurn -> resolveTurn
+  machine: [
+    state p1: {
+      moved -> p2,
+      noMoves -> gameOver
     },
-    state resolveTurn: {
-      next -> playerTurn,
-      checkmate -> gameOver
+    state p2: {
+      moved -> p1,
+      noMoves -> gameOver
     },
     state gameOver: {}
-  }
+  ]
 }
 ```
 
@@ -249,7 +257,7 @@ piece pawn: {
 ## Full example
 ```dsl
 game: {
-  players: {
+  players: [
     id: p1,
     pieces: {
       p1Pawn: {
@@ -276,9 +284,9 @@ game: {
         initialPosition: {x: 1, y: 7}
       }
     }
-  },
+  ],
   board: {width: 8, height: 8},
-  chest: {
+  chest: [
     piece pawn: {
       rule: pawnForwardOnly,
       move fwd: {forward 1},
@@ -290,26 +298,27 @@ game: {
       move rightDown: {backward 1, right 2},
       move none: {}
     }
-  },
+  ],
   actions: [
     action: {ID: p1Pawn, move: fwd},
-    action: {ID: p1Horse, move: fwdR}
+    action: {ID: p1Horse, move: fwdR},
+    action: {ID: p2Pawn, move: fwd},
+    action: {ID: p2Horse, move: fwdR}
   ],
   flow: {
-    start: playerTurn,
+    start: p1,
     end: gameOver,
-    machine: {
-      state playerTurn: {
-        p1Move -> resolveTurn,
-        p2Move -> resolveTurn
+    machine: [
+      state p1: {
+        moved -> p2,
+        noMoves -> gameOver
       },
-      state resolveTurn: {
-        nextP1 -> playerTurn,
-        nextP2 -> playerTurn,
-        gameEnds -> gameOver
+      state p2: {
+        moved -> p1,
+        noMoves -> gameOver
       },
       state gameOver: {}
-    }
+    ]
   },
   rule: mustMoveInBounds,
   rule: oneActionPerTurn

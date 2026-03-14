@@ -15,25 +15,28 @@ The file must parse as `Game` in `Syntax.rsc`. If syntax is invalid, parsing fai
 
 ## 2. Structural Top-Level Checks (`Parser.rsc`)
 
-Exactly one of each block is required:
+Required blocks (exactly one each):
 - `chest`
-- `actions`
 - `board`
 - `players`
 - `flow`
 
 Failure messages include:
 - `No chest defined` / `Multiple chests defined`
-- `No actions defined` / `Multiple actions defined`
 - `No board defined` / `Multiple boards defined`
 - `No players defined` / `Multiple players blocks defined`
 - `No flow defined` / `Multiple flows defined`
+
+Optional block:
+- `actions` may be omitted for interactive gameplay.
+- if present more than once: `Multiple actions defined`
 
 ## 3. Conversion-Time Consistency Checks (`ToModel.rsc`)
 
 These checks throw during parse-tree -> AST mapping:
 
-- Required subtrees exist (`Board`, `Chest`, `Actions`, `Players`, `Flow`).
+- Required subtrees exist (`Board`, `Chest`, `Players`, `Flow`).
+- `Actions` subtree is optional; missing `actions` maps to an empty action list.
 - Board must provide exactly two integers: `width` and `height`.
 - Each player definition must provide:
   - a player `id` property (`id: <name>`)
@@ -47,6 +50,7 @@ These checks throw during parse-tree -> AST mapping:
 - Flow must define both `start` and `end`.
 - Every flow state must have a name.
 - Every transition must define both event and target.
+- Flow transition events are restricted by grammar to `moved` or `noMoves`.
 - Every piece definition must have a piece identifier.
 - Every move must have a move identifier.
 - Every step direction must include exactly one amount.
@@ -78,6 +82,11 @@ These checks throw during parse-tree -> AST mapping:
 
 ### Flow Machine
 - `DuplicateFlowState(stateId)`: duplicate state ID.
+- `InvalidFlowStateActor(stateId)`: state name is not a declared player and not `gameOver`.
+- `InvalidFlowStartPlayer(stateId)`: `start` is not a declared player.
+- `InvalidFlowEndState(stateId)`: `end` is not exactly `gameOver`.
+- `AmbiguousFlowEventTransition(fromState, event)`: one state defines multiple transitions for the same event.
+- `MissingFlowEventTransition(fromState, event)`: non-`gameOver` state is missing required `moved` or `noMoves`.
 - `DuplicateFlowTransition(fromState, event, toState)`: duplicate edge in one state.
 - `UnknownFlowStart(stateId)`: start state not declared.
 - `UnknownFlowEnd(stateId)`: end state not declared.

@@ -8,7 +8,6 @@ import Syntax;
 GameDef toModel(Game gameTree) {
   Board boardTree = firstBoard(gameTree);
   Chest chestTree = firstChest(gameTree);
-  Actions actionsTree = firstActions(gameTree);
   Players playersTree = firstPlayers(gameTree);
   Flow flowTree = firstFlow(gameTree);
 
@@ -21,7 +20,7 @@ GameDef toModel(Game gameTree) {
     toBoardDef(boardTree),
     toPieceDefs(chestTree),
     assignedPieces,
-    toActionDefs(actionsTree),
+    toOptionalActionDefs(gameTree),
     flow,
     rules,
     players
@@ -54,17 +53,21 @@ private Chest firstChest(Game gameTree) {
   return chests[0];
 }
 
-private Actions firstActions(Game gameTree) {
+private list[ActionDef] toOptionalActionDefs(Game gameTree) {
   list[Actions] allActions = [];
   visit(gameTree) {
     case Actions actionsTree: allActions += [actionsTree];
   }
 
   if (size(allActions) == 0) {
-    throw "Game has no actions";
+    return [];
   }
 
-  return allActions[0];
+  if (size(allActions) > 1) {
+    throw "Game has multiple actions blocks";
+  }
+
+  return toActionDefs(allActions[0]);
 }
 
 private Players firstPlayers(Game gameTree) {

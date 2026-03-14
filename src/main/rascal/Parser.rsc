@@ -55,7 +55,7 @@ Chest parseChestFile(loc fileloc) {
 }
 
 
-// checks required sections (board/actions/chest/players/flow)
+// checks required sections (board/chest/players/flow) and optional actions block
 void checkGame(Game g){
   nChest = 0;
   nBoard = 0;
@@ -70,7 +70,7 @@ void checkGame(Game g){
     case Flow _: nFlow += 1;
   }
   if (nChest != 1) throw  nChest == 0 ? "No chest defined" :"Multiple chests defined" ;
-  if (nActions != 1) throw nActions == 0 ? "No actions defined" :  "Multiple actions defined" ;
+  if (nActions > 1) throw "Multiple actions defined" ;
   if (nBoard != 1) throw nBoard == 0 ? "No board defined" : "Multiple boards defined" ;
   if (nPlayers != 1) throw nPlayers == 0 ? "No players defined" : "Multiple players blocks defined";
   if (nFlow != 1) throw nFlow == 0 ? "No flow defined" : "Multiple flows defined";

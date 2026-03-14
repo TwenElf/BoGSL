@@ -18,6 +18,11 @@ data SemanticError
   | UnknownActionPiece(str pieceId)
   | UnknownActionMove(str pieceId, str moveId)
   | DuplicateFlowState(str stateId)
+  | InvalidFlowStateActor(str stateId)
+  | InvalidFlowStartPlayer(str stateId)
+  | InvalidFlowEndState(str stateId)
+  | AmbiguousFlowEventTransition(str fromState, str event)
+  | MissingFlowEventTransition(str fromState, str event)
   | DuplicateFlowTransition(str fromState, str event, str toState)
   | UnknownFlowStart(str stateId)
   | UnknownFlowEnd(str stateId)
@@ -134,7 +139,7 @@ list[SemanticError] checkSemantics(GameDef game) {
         }
       }
 
-      errors += checkFlowSemantics(flow);
+      errors += checkFlowSemantics(flow, playerIds);
       errors += checkRuleSemantics(rules, pieceTypeIds);
     }
   }
@@ -142,12 +147,13 @@ list[SemanticError] checkSemantics(GameDef game) {
   return errors;
 }
 
-private list[SemanticError] checkFlowSemantics(FlowDef flow) {
+private list[SemanticError] checkFlowSemantics(FlowDef flow, set[str] playerIds) {
   list[SemanticError] errors = [];
 
   switch (flow) {
     case flowDef(str startState, str endState, list[StateDef] states): {
       set[str] stateIds = {};
+      set[str] validStateActors = playerIds + {"gameOver"};
 
       for (state <- states) {
         switch (state) {
@@ -157,8 +163,20 @@ private list[SemanticError] checkFlowSemantics(FlowDef flow) {
             } else {
               stateIds += {stateId};
             }
+
+            if (!(stateId in validStateActors)) {
+              errors += [InvalidFlowStateActor(stateId)];
+            }
           }
         }
+      }
+
+      if (!(startState in playerIds)) {
+        errors += [InvalidFlowStartPlayer(startState)];
+      }
+
+      if (endState != "gameOver") {
+        errors += [InvalidFlowEndState(endState)];
       }
 
       if (!(startState in stateIds)) {
@@ -173,6 +191,7 @@ private list[SemanticError] checkFlowSemantics(FlowDef flow) {
         switch (state) {
           case stateDef(str fromState, list[TransitionDef] transitions): {
             set[tuple[str, str]] seenTransitions = {};
+            map[str, int] eventCounts = ();
             for (transition <- transitions) {
               switch (transition) {
                 case transitionDef(str event, str toState): {
@@ -186,7 +205,27 @@ private list[SemanticError] checkFlowSemantics(FlowDef flow) {
                   if (!(toState in stateIds)) {
                     errors += [UnknownFlowTransitionTarget(fromState, toState)];
                   }
+
+                  if (!(event in eventCounts)) {
+                    eventCounts[event] = 0;
+                  }
+                  eventCounts[event] += 1;
                 }
+              }
+            }
+
+            if (fromState != "gameOver") {
+              if (!("moved" in eventCounts)) {
+                errors += [MissingFlowEventTransition(fromState, "moved")];
+              }
+              if (!("noMoves" in eventCounts)) {
+                errors += [MissingFlowEventTransition(fromState, "noMoves")];
+              }
+            }
+
+            for (event <- eventCounts) {
+              if (eventCounts[event] > 1) {
+                errors += [AmbiguousFlowEventTransition(fromState, event)];
               }
             }
           }

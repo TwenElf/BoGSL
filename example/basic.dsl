@@ -1,5 +1,5 @@
 game: {
-  players: {
+  players: [
     id: p1,
     pieces: {
       p1Pawn: {
@@ -26,9 +26,9 @@ game: {
         initialPosition: {x: 1, y: 7}
       }
     }
-  },
+  ],
   board: {width: 8, height: 8},
-  chest: {
+  chest: [
     piece pawn: {
       rule: pawnForwardOnly,
       move fwd: {forward 1},
@@ -40,26 +40,27 @@ game: {
       move rightDown: {backward 1, right 2},
       move none: {}
     }
-  },
+  ],
   actions: [
     action: {ID: p1Pawn, move: fwd},
-    action: {ID: p1Horse, move: fwdR}
+    action: {ID: p1Horse, move: fwdR},
+    action: {ID: p2Pawn, move: fwd},
+    action: {ID: p2Horse, move: fwdR}
   ],
   flow: {
-    start: playerTurn,
+    start: p1,
     end: gameOver,
-    machine: {
-      state playerTurn: {
-        p1Move -> resolveTurn,
-        p2Move -> resolveTurn
+    machine: [
+      state p1: {
+        moved -> p2,
+        noMoves -> gameOver
       },
-      state resolveTurn: {
-        nextP1 -> playerTurn,
-        nextP2 -> playerTurn,
-        gameEnds -> gameOver
+      state p2: {
+        moved -> p1,
+        noMoves -> gameOver
       },
       state gameOver: {}
-    }
+    ]
   },
   rule: mustMoveInBounds,
   rule: oneActionPerTurn

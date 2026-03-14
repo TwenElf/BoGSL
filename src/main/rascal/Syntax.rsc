@@ -11,13 +11,13 @@ lexical Integer
 keyword KW
   = "game" | "chest" | "actions" | "board" | "piece" | "direction" | "move"
   | "north" | "south" | "east" | "west" | "forward" | "backward" | "left" | "right" | "action" | "ID"
-  | "flow" | "start" | "end"
+  | "flow" | "start" | "end" | "gameOver" | "moved" | "noMoves"
   | "players" | "id" | "pieces" | "type" | "initialPosition" | "machine" | "state"
   | "rule"
   ;
 
 lexical ID
-  = [A-Za-z_][A-Za-z0-9_]* !>> [A-Za-z0-9_]
+  = [A-Za-z_][A-Za-z0-9_]* !>> [A-Za-z0-9_] \ KW
   ;
 
 lexical MoveID
@@ -44,7 +44,7 @@ syntax GameProperty
   ;
 
 syntax Players
-  = "{" { PlayerDefinition "," }* PlayerDefinition? "}"
+  = "[" { PlayerDefinition "," }* PlayerDefinition? "]"
   ;
 
 syntax PlayerDefinition
@@ -112,7 +112,7 @@ syntax AssignedPieceType
 
 // ---------- Pieces syntax ----------
 syntax Chest // chest as in pieces chest
-  = "{" {Piece ","}* Piece? "}"
+  = "[" {Piece ","}* Piece? "]"
   ;
 
 syntax Piece
@@ -166,15 +166,15 @@ syntax Flow
   ;
 
 syntax StartState
-  = ID
+  = PlayerName
   ;
 
 syntax EndState
-  = ID
+  = GameOverState
   ;
 
 syntax Machine
-  = "{" { FlowState "," }* FlowState? "}"
+  = "[" { FlowState "," }* FlowState? "]"
   ;
 
 syntax FlowState
@@ -182,7 +182,7 @@ syntax FlowState
   ;
 
 syntax StateName
-  = ID
+  = PlayerName
   ;
 
 syntax StateTransition
@@ -194,11 +194,12 @@ syntax StateTransitions
   ;
 
 syntax TransitionEvent
-  = ID
+  = "moved"
+  | "noMoves"
   ;
 
 syntax TransitionTarget
-  = ID
+  = PlayerName
   ;
 
 syntax Arrow
@@ -207,4 +208,8 @@ syntax Arrow
 
 syntax RuleName
   = ID
+  ;
+
+syntax GameOverState
+  = "gameOver"
   ;

@@ -40,7 +40,8 @@ Main entrypoint:
 - `toModel(Game gameTree) -> GameDef`
 
 What it does:
-- extracts first `Board`, `Chest`, `Actions`, and `Players` subtree
+- extracts first `Board`, `Chest`, and `Players` subtree
+- extracts optional `Actions` subtree (defaults to empty action list if absent)
 - extracts required `Flow` subtree
 - extracts game-wide rules from top-level `GameRuleProperty` (`rule: <ID>`)
 - extracts piece-wide rules from `PieceRuleProperty` inside each piece (`rule: <ID>`)
@@ -81,6 +82,11 @@ Current checks:
 - action points to unknown assigned piece (`UnknownActionPiece`)
 - action points to unknown move for that assigned piece type (`UnknownActionMove`)
 - duplicate flow states (`DuplicateFlowState`)
+- flow state names that are not player IDs or `gameOver` (`InvalidFlowStateActor`)
+- flow start that is not a player ID (`InvalidFlowStartPlayer`)
+- flow end that is not `gameOver` (`InvalidFlowEndState`)
+- ambiguous multiple transitions for one flow event in one state (`AmbiguousFlowEventTransition`)
+- missing required `moved`/`noMoves` transitions in non-`gameOver` states (`MissingFlowEventTransition`)
 - duplicate flow transitions (`DuplicateFlowTransition`)
 - unknown flow start/end states (`UnknownFlowStart`, `UnknownFlowEnd`)
 - unknown flow transition targets (`UnknownFlowTransitionTarget`)
@@ -88,6 +94,17 @@ Current checks:
 - duplicate game-wide rules (`DuplicateGameRule`)
 - duplicate piece-wide rules per piece (`DuplicatePieceRule`)
 - piece-wide rules that target unknown pieces (`UnknownPieceRulePiece`)
+
+## Runtime flow wiring (`Gameplay.rsc`)
+
+Gameplay now follows the flow machine directly:
+- `availableMoves(game, state, playerId)` computes legal candidate moves for one player
+- `doFlowTurn(state, game)` executes one turn and triggers either `moved` or `noMoves`
+- `doFlowGameplay(game)` iterates flow transitions until `end` is reached (`gameOver`)
+
+Transition resolution is event-based:
+- if the current player has at least one legal move, one is executed and event `moved` is emitted
+- otherwise event `noMoves` is emitted
 
 ## Parser API integration
 `Parser.rsc` exposes AST and semantic-check helpers:
