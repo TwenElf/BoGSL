@@ -12,7 +12,7 @@ keyword KW
   = "game" | "chest" | "actions" | "board" | "piece" | "direction" | "move"
   | "north" | "south" | "east" | "west" | "forward" | "backward" | "left" | "right" | "action" | "ID"
   | "flow" | "start" | "end"
-  | "players" | "pieces" | "type" | "initialPosition" | "machine" | "state"
+  | "players" | "id" | "pieces" | "type" | "initialPosition" | "machine" | "state"
   | "rule"
   ;
 
@@ -39,13 +39,24 @@ syntax GameProperty
   | "actions" ":" Actions
   | "board"   ":" Board
   | "players" ":" Players
-  | "pieces" ":" PieceAssignments
   | GameRuleProperty
   | "flow"    ":" Flow
   ;
 
 syntax Players
-  = "[" { PlayerName "," }* PlayerName? "]"
+  = "{" { PlayerDefinition "," }* PlayerDefinition? "}"
+  ;
+
+syntax PlayerDefinition
+  = PlayerIdProperty "," PlayerPiecesProperty
+  ;
+
+syntax PlayerIdProperty
+  = "id" ":" PlayerName
+  ;
+
+syntax PlayerPiecesProperty
+  = "pieces" ":" PieceAssignments
   ;
 
 syntax PlayerName

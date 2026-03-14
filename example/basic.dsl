@@ -1,25 +1,30 @@
 game: {
-  players: [p1, p2],
-  pieces: {
-    p1Pawn: {
-      type pawn
-      direction: south
-      initialPosition: {x: 0, y: 1}
+  players: {
+    id: p1,
+    pieces: {
+      p1Pawn: {
+        type pawn
+        direction: south
+        initialPosition: {x: 0, y: 1}
+      },
+      p1Horse: {
+        type horse
+        direction: east
+        initialPosition: {x: 1, y: 0}
+      }
     },
-    p1Horse: {
-      type horse
-      direction: east
-      initialPosition: {x: 1, y: 0}
-    },
-    p2Pawn: {
-      type pawn
-      direction: north
-      initialPosition: {x: 0, y: 6}
-    },
-    p2Horse: {
-      type horse
-      direction: west
-      initialPosition: {x: 1, y: 7}
+    id: p2,
+    pieces: {
+      p2Pawn: {
+        type pawn
+        direction: north
+        initialPosition: {x: 0, y: 6}
+      },
+      p2Horse: {
+        type horse
+        direction: west
+        initialPosition: {x: 1, y: 7}
+      }
     }
   },
   board: {width: 8, height: 8},

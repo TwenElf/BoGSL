@@ -9,6 +9,7 @@ data SemanticError
   = DuplicatePiece(str pieceTypeId)
   | DuplicateMove(str pieceTypeId, str moveId)
   | DuplicateAssignedPiece(str pieceId)
+  | UnknownAssignedPiecePlayer(str pieceId, str playerId)
   | UnknownAssignedPieceType(str pieceId, str typeId)
   | DuplicateAssignedPiecePosition(str pieceId, int x, int y)
   | AssignedPieceOutOfBounds(str pieceId, int x, int y, int width, int height)
@@ -89,11 +90,15 @@ list[SemanticError] checkSemantics(GameDef game) {
 
       for (assignment <- assignedPieces) {
         switch (assignment) {
-          case pieceAssignmentDef(str pieceId, str typeId, _, positionDef(int x, int y)): {
+          case pieceAssignmentDef(str playerId, str pieceId, str typeId, _, positionDef(int x, int y)): {
             if (pieceId in assignedPieceIds) {
               errors += [DuplicateAssignedPiece(pieceId)];
             } else {
               assignedPieceIds += {pieceId};
+            }
+
+            if (!(playerId in playerIds)) {
+              errors += [UnknownAssignedPiecePlayer(pieceId, playerId)];
             }
 
             if (!(typeId in pieceTypeIds)) {

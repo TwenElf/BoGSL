@@ -8,7 +8,6 @@ import Syntax;
 GameDef toModel(Game gameTree) {
   Board boardTree = firstBoard(gameTree);
   Chest chestTree = firstChest(gameTree);
-  PieceAssignments assignmentTree = firstPieceAssignments(gameTree);
   Actions actionsTree = firstActions(gameTree);
   Players playersTree = firstPlayers(gameTree);
   Flow flowTree = firstFlow(gameTree);
@@ -16,7 +15,7 @@ GameDef toModel(Game gameTree) {
   FlowDef flow = toFlowDef(flowTree);
   list[RuleDef] rules = toGameRuleDefs(gameTree) + toPieceRuleDefs(chestTree);
   list[str] players = toPlayers(playersTree);
-  list[PieceAssignmentDef] assignedPieces = toPieceAssignments(assignmentTree);
+  list[PieceAssignmentDef] assignedPieces = toPieceAssignments(playersTree);
 
   return gameDef(
     toBoardDef(boardTree),
@@ -53,19 +52,6 @@ private Chest firstChest(Game gameTree) {
   }
 
   return chests[0];
-}
-
-private PieceAssignments firstPieceAssignments(Game gameTree) {
-  list[PieceAssignments] allAssignments = [];
-  visit(gameTree) {
-    case PieceAssignments assignmentTree: allAssignments += [assignmentTree];
-  }
-
-  if (size(allAssignments) == 0) {
-    throw "Game has no piece assignments";
-  }
-
-  return allAssignments[0];
 }
 
 private Actions firstActions(Game gameTree) {
@@ -122,21 +108,49 @@ BoardDef toBoardDef(Board boardTree) {
 
 list[str] toPlayers(Players playersTree) {
   list[str] players = [];
-  visit(playersTree) {
-    case PlayerName playerTree: players += [trim(unparse(playerTree))];
+  for (definition <- playerDefinitions(playersTree)) {
+    players += [toPlayerId(definition)];
   }
   return players;
 }
 
-list[PieceAssignmentDef] toPieceAssignments(PieceAssignments assignmentTree) {
+private list[PlayerDefinition] playerDefinitions(Players playersTree) {
+  list[PlayerDefinition] definitions = [];
+  visit(playersTree) {
+    case PlayerDefinition definitionTree: definitions += [definitionTree];
+  }
+  return definitions;
+}
+
+private str toPlayerId(PlayerDefinition playerDefinitionTree) {
+  str playerId = "";
+  visit(playerDefinitionTree) {
+    case PlayerName playerTree: if (playerId == "") playerId = trim(unparse(playerTree));
+  }
+  if (playerId == "") {
+    throw "Player definition must define an id";
+  }
+  return playerId;
+}
+
+list[PieceAssignmentDef] toPieceAssignments(Players playersTree) {
   list[PieceAssignmentDef] assignments = [];
-  visit(assignmentTree) {
-    case PieceAssignment pieceAssignmentTree: assignments += [toPieceAssignmentDef(pieceAssignmentTree)];
+  for (playerDefinitionTree <- playerDefinitions(playersTree)) {
+    assignments += toPieceAssignments(playerDefinitionTree);
   }
   return assignments;
 }
 
-PieceAssignmentDef toPieceAssignmentDef(PieceAssignment pieceAssignmentTree) {
+private list[PieceAssignmentDef] toPieceAssignments(PlayerDefinition playerDefinitionTree) {
+  str playerId = toPlayerId(playerDefinitionTree);
+  list[PieceAssignmentDef] assignments = [];
+  visit(playerDefinitionTree) {
+    case PieceAssignment pieceAssignmentTree: assignments += [toPieceAssignmentDef(playerId, pieceAssignmentTree)];
+  }
+  return assignments;
+}
+
+PieceAssignmentDef toPieceAssignmentDef(str playerId, PieceAssignment pieceAssignmentTree) {
   str pieceId = "";
   str typeId = "";
   list[Facing] directions = [];
@@ -162,7 +176,7 @@ PieceAssignmentDef toPieceAssignmentDef(PieceAssignment pieceAssignmentTree) {
     throw "Piece assignment <pieceId> must define exactly one initialPosition";
   }
 
-  return pieceAssignmentDef(pieceId, typeId, directions[0], positions[0]);
+  return pieceAssignmentDef(playerId, pieceId, typeId, directions[0], positions[0]);
 }
 
 PositionDef toPositionDef(InitialPosition positionTree) {

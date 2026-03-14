@@ -17,7 +17,7 @@ PieceState newPieceState(PieceAssignmentDef assignment, PieceDef pieceType) {
     = (move.name: move.steps | MoveDef move <- pieceType.moves);
 
   switch (assignment) {
-    case pieceAssignmentDef(_, _, Facing direction, positionDef(int x, int y)):
+    case pieceAssignmentDef(_, _, _, Facing direction, positionDef(int x, int y)):
       return pieceState(x, y, direction, moves);
   }
 
@@ -34,7 +34,7 @@ GameplayState newGameplayState(GameDef game) {
   map[str, PieceState] pieces = ();
   for (assignment <- game.assignedPieces) {
     switch (assignment) {
-      case pieceAssignmentDef(str pieceId, str typeId, _, _): {
+      case pieceAssignmentDef(_, str pieceId, str typeId, _, _): {
         if (!(typeId in pieceTypes)) {
           throw "Assigned piece <pieceId> references unknown type <typeId>";
         }

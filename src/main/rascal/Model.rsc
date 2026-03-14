@@ -27,7 +27,7 @@ data PositionDef
   ;
 
 data PieceAssignmentDef
-  = pieceAssignmentDef(str pieceId, str typeId, Facing direction, PositionDef initialPosition)
+  = pieceAssignmentDef(str playerId, str pieceId, str typeId, Facing direction, PositionDef initialPosition)
   ;
 
 data BoardDef

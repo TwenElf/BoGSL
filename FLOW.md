@@ -79,6 +79,7 @@ Semantic checks:
 ## Notes on Player Order
 
 Player order is modeled by your node topology and transition edges.
+Piece placement/assignment is defined separately in `players` via `id: ... , pieces: { ... }`.
 For example:
 - `playerTurnWhite` node transitions to `playerTurnBlack`
 - `playerTurnBlack` transitions back to `playerTurnWhite`

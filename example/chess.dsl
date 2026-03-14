@@ -1,25 +1,30 @@
 game: {
-  players: [white, black],
-  pieces: {
-    whitePawnA: {
-      type pawn
-      direction: south
-      initialPosition: {x: 0, y: 1}
+  players: {
+    id: white,
+    pieces: {
+      whitePawnA: {
+        type pawn
+        direction: south
+        initialPosition: {x: 0, y: 1}
+      },
+      whiteKing: {
+        type king
+        direction: south
+        initialPosition: {x: 4, y: 0}
+      }
     },
-    whiteKing: {
-      type king
-      direction: south
-      initialPosition: {x: 4, y: 0}
-    },
-    blackPawnA: {
-      type pawn
-      direction: north
-      initialPosition: {x: 0, y: 6}
-    },
-    blackKing: {
-      type king
-      direction: north
-      initialPosition: {x: 4, y: 7}
+    id: black,
+    pieces: {
+      blackPawnA: {
+        type pawn
+        direction: north
+        initialPosition: {x: 0, y: 6}
+      },
+      blackKing: {
+        type king
+        direction: north
+        initialPosition: {x: 4, y: 7}
+      }
     }
   },
   board: {width: 8, height: 8},

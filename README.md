@@ -5,14 +5,15 @@ A grid-based board game specific language (DSL), created for the Software Langua
 - `pom.xml`
 - `META-INF/RASCAL.MF`
 - `AST_PIPELINE.md` (AST architecture and module responsibilities)
+- `CONTSTRAINTS.md` (all current parser/conversion/semantic constraints)
+- `FLOW.md` (flow state machine design notes)
 - `src/main/rascal/Syntax.rsc` (grammar)
 - `src/main/rascal/Parser.rsc` (parse entry points + structural and semantic check helpers)
 - `src/main/rascal/Model.rsc` (AST data types)
 - `src/main/rascal/ToModel.rsc` (parse tree -> AST conversion)
 - `src/main/rascal/Checks.rsc` (semantic validations on AST)
-- `src/main/rascal/exampleGame.dsl`
-- `src/main/rascal/exampleGame2.dsl`
-- `src/main/rascal/exampleGame3.dsl` (chess-like demo)
+- `example/basic.dsl`
+- `example/chess.dsl` (chess-like demo)
 
 ## Build
 Run from repository root:
@@ -26,17 +27,16 @@ In a Rascal REPL:
 
 ```rascal
 import Parser;
-parseGameFile(|cwd:///src/main/rascal/exampleGame3.dsl|);
+parseGameFile(|cwd:///example/chess.dsl|);
 ```
 
-`exampleGame2.dsl` and `exampleGame3.dsl` are valid end-to-end examples.
-`exampleGame3.dsl` is a chess-like demo (white/black turn loop, one game rule, one piece rule: `enPassant` on `pawn`, and explicit per-piece placement).
-`exampleGame.dsl` is currently intentionally incomplete for structural-check testing (it misses `board`), so `parseGameFile` throws `"No board defined"`.
+`example/basic.dsl` and `example/chess.dsl` are valid end-to-end examples.
+`example/chess.dsl` is a chess-like demo (white/black turn loop, one game rule, one piece rule: `enPassant` on `pawn`, and explicit per-player piece placement).
 
 `parseGameFile` and `parseGame` both:
 - trim input before parsing
 - parse with start symbol `Game`
-- enforce one `board`, one `chest`, one `actions`, one `players`, one `pieces`, and one `flow` via `checkGame`
+- enforce one `board`, one `chest`, one `actions`, one `players`, and one `flow` via `checkGame`
 
 ## AST and semantic checks
 BoGSL uses an AST layer to separate parsing from game semantics.
@@ -50,14 +50,16 @@ AST flow:
 
 Detailed module-by-module explanation:
 - [AST pipeline details](AST_PIPELINE.md)
+- [Current constraints list](CONTSTRAINTS.md)
+- [Flow machine design](FLOW.md)
 
 From a Rascal REPL:
 
 ```rascal
 import Parser;
 
-g = parseGameModelFile(|cwd:///src/main/rascal/exampleGame3.dsl|);
-errs = checkGameModelFile(|cwd:///src/main/rascal/exampleGame3.dsl|);
+g = parseGameModelFile(|cwd:///example/chess.dsl|);
+errs = checkGameModelFile(|cwd:///example/chess.dsl|);
 ```
 
 `g` is a `GameDef` AST value and `errs` is a list of semantic errors.
@@ -72,7 +74,6 @@ The start symbol is `Game`.
 - each `GameProperty` is one of:
   - `board: Board`
   - `chest: Chest`
-  - `pieces: PieceAssignments`
   - `actions: Actions`
   - `players: Players`
   - `flow: Flow`
@@ -80,7 +81,7 @@ The start symbol is `Game`.
 
 Note:
 - The grammar allows properties in any order.
-- The parser checker enforces exactly one `board`, one `chest`, one `actions`, one `players`, one `pieces`, and one `flow`.
+- The parser checker enforces exactly one `board`, one `chest`, one `actions`, one `players`, and one `flow`.
 
 ### `Board` is composed of
 - `{ width: Integer, height: Integer }`
@@ -91,31 +92,54 @@ board: {width: 8, height: 8}
 ```
 
 ### `Players` is composed of
-- `[ <ID>, <ID>, ... ]`
-- supports empty list (`[]`) and optional trailing comma
+- `{ PlayerDefinition, PlayerDefinition, ... }`
+- supports empty players block (`{}`) and optional trailing comma
 
 Example:
 ```dsl
-players: [alice, bob]
+players: {
+  id: alice,
+  pieces: {
+    aliceKing: {
+      type king
+      direction: south
+      initialPosition: {x: 4, y: 0}
+    }
+  },
+  id: bob,
+  pieces: {
+    bobKing: {
+      type king
+      direction: north
+      initialPosition: {x: 4, y: 7}
+    }
+  }
+}
 ```
 
+### `PlayerDefinition` is composed of
+- `id: <playerID>, pieces: PieceAssignments`
+
 ### `PieceAssignments` is composed of
-- `{ <pieceID>: { type <pieceTypeID>, direction: FacingDirection, initialPosition: {x: Integer, y: Integer} }, ... }`
+- `{ <pieceID>: { type <pieceTypeID>, direction: FacingDirection, initialPosition: {x: Integer, y: Integer} }, ... }` (inside a player definition)
 - assignment properties can be comma-separated or newline-separated
 - `type` accepts both `type pawn` and `type: pawn`
 
 Example:
 ```dsl
-pieces: {
-  whitePawnA: {
-    type pawn
-    direction: south
-    initialPosition: {x: 0, y: 1}
-  },
-  blackKing: {
-    type: king,
-    direction: north,
-    initialPosition: {x: 4, y: 7}
+players: {
+  id: white,
+  pieces: {
+    whitePawnA: {
+      type pawn
+      direction: south
+      initialPosition: {x: 0, y: 1}
+    },
+    whiteKing: {
+      type: king,
+      direction: south,
+      initialPosition: {x: 4, y: 0}
+    }
   }
 }
 ```
@@ -161,6 +185,7 @@ piece pawn: {
 
 ### `Action` is composed of
 - `action: {ID: <ID>, move: <MoveID>}`
+- `ID` must be an assigned piece ID from `players -> pieces` (not a piece type from `chest`)
 
 Example:
 ```dsl
@@ -224,27 +249,32 @@ piece pawn: {
 ## Full example
 ```dsl
 game: {
-  players: [p1, p2],
-  pieces: {
-    p1Pawn: {
-      type pawn
-      direction: south
-      initialPosition: {x: 0, y: 1}
+  players: {
+    id: p1,
+    pieces: {
+      p1Pawn: {
+        type pawn
+        direction: south
+        initialPosition: {x: 0, y: 1}
+      },
+      p1Horse: {
+        type horse
+        direction: east
+        initialPosition: {x: 1, y: 0}
+      }
     },
-    p1Horse: {
-      type horse
-      direction: east
-      initialPosition: {x: 1, y: 0}
-    },
-    p2Pawn: {
-      type pawn
-      direction: north
-      initialPosition: {x: 0, y: 6}
-    },
-    p2Horse: {
-      type horse
-      direction: west
-      initialPosition: {x: 1, y: 7}
+    id: p2,
+    pieces: {
+      p2Pawn: {
+        type pawn
+        direction: north
+        initialPosition: {x: 0, y: 6}
+      },
+      p2Horse: {
+        type horse
+        direction: west
+        initialPosition: {x: 1, y: 7}
+      }
     }
   },
   board: {width: 8, height: 8},

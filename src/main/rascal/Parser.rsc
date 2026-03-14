@@ -55,27 +55,24 @@ Chest parseChestFile(loc fileloc) {
 }
 
 
-// checks required sections (board/actions/chest/players/pieces/flow)
+// checks required sections (board/actions/chest/players/flow)
 void checkGame(Game g){
   nChest = 0;
   nBoard = 0;
   nActions = 0;
   nPlayers = 0;
-  nPieces = 0;
   nFlow = 0;
   visit(g){
     case Chest _: nChest += 1;
     case Actions _: nActions += 1;
     case Board _: nBoard += 1;
     case Players _: nPlayers += 1;
-    case PieceAssignments _: nPieces += 1;
     case Flow _: nFlow += 1;
   }
   if (nChest != 1) throw  nChest == 0 ? "No chest defined" :"Multiple chests defined" ;
   if (nActions != 1) throw nActions == 0 ? "No actions defined" :  "Multiple actions defined" ;
   if (nBoard != 1) throw nBoard == 0 ? "No board defined" : "Multiple boards defined" ;
   if (nPlayers != 1) throw nPlayers == 0 ? "No players defined" : "Multiple players blocks defined";
-  if (nPieces != 1) throw nPieces == 0 ? "No pieces defined" : "Multiple pieces blocks defined";
   if (nFlow != 1) throw nFlow == 0 ? "No flow defined" : "Multiple flows defined";
   return;
 }

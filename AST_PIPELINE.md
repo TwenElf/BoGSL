@@ -17,7 +17,7 @@ Pipeline:
 - `GameDef(board, pieces, assignedPieces, actions, flow, rules, players)`
 - `BoardDef(width, height)`
 - `PieceDef(name, moves)`
-- `PieceAssignmentDef(pieceId, typeId, direction, initialPosition)`
+- `PieceAssignmentDef(playerId, pieceId, typeId, direction, initialPosition)`
 - `PositionDef(x, y)`
 - `MoveDef(name, steps)`
 - `ActionDef(pieceId, moveId)`
@@ -40,13 +40,14 @@ Main entrypoint:
 - `toModel(Game gameTree) -> GameDef`
 
 What it does:
-- extracts first `Board`, `Chest`, `PieceAssignments`, `Actions`, and `Players` subtree
+- extracts first `Board`, `Chest`, `Actions`, and `Players` subtree
 - extracts required `Flow` subtree
 - extracts game-wide rules from top-level `GameRuleProperty` (`rule: <ID>`)
 - extracts piece-wide rules from `PieceRuleProperty` inside each piece (`rule: <ID>`)
 - maps board integers to `BoardDef`
 - maps every `Piece` (type) to `PieceDef`
-- maps every `PieceAssignment` to `PieceAssignmentDef`
+- maps every `PlayerDefinition` `id` to the `players` list
+- maps every `PieceAssignment` (nested inside each `PlayerDefinition`) to `PieceAssignmentDef`
 - maps `FacingDirection` to `Facing`
 - maps `Movement` and `Direction` to `MoveDef` and `Step`
 - maps each `Action` to `ActionDef`
@@ -71,6 +72,7 @@ Current checks:
 - duplicate piece type IDs (`DuplicatePiece`)
 - duplicate move IDs inside one piece type (`DuplicateMove`)
 - duplicate assigned piece IDs (`DuplicateAssignedPiece`)
+- assigned piece references unknown player (`UnknownAssignedPiecePlayer`)
 - assigned piece references unknown type (`UnknownAssignedPieceType`)
 - duplicate assigned positions (`DuplicateAssignedPiecePosition`)
 - assigned piece placed outside board bounds (`AssignedPieceOutOfBounds`)
@@ -106,10 +108,10 @@ In Rascal REPL:
 ```rascal
 import Parser;
 
-g = parseGameModelFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame3.dsl|);
-errs = checkGameModelFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame3.dsl|);
+g = parseGameModelFile(|cwd:///example/chess.dsl|);
+errs = checkGameModelFile(|cwd:///example/chess.dsl|);
 ```
 
 `g` contains the normalized game model.
 `errs` contains all semantic errors found in that model.
-Use `exampleGame3.dsl` for a chess-like sample covering node-based flow, one game rule, `enPassant` as a piece rule on `pawn`, and explicit per-piece placement.
+Use `example/chess.dsl` for a chess-like sample covering node-based flow, one game rule, `enPassant` as a piece rule on `pawn`, and explicit per-player piece placement.
