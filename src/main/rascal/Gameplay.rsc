@@ -127,7 +127,7 @@ private StateDef findFlowState(FlowDef flow, str stateId) {
   throw "Unknown flow state at runtime: <stateId>";
 }
 
-private str advanceFlow(FlowDef flow, str currentState, str event) {
+str advanceFlow(FlowDef flow, str currentState, str event) {
   StateDef state = findFlowState(flow, currentState);
   list[TransitionDef] matching = [t | t <- state.transitions, t.event == event];
 

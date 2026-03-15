@@ -5,6 +5,7 @@ import Gameplay;
 import Parser;
 import Display;
 import Model;
+import UI;
 
 void printAvailableMoves(list[AvailableMove] moves) {
     if (moves == []) {
@@ -34,15 +35,12 @@ void testAvailableMovesChess() {
     printAvailableMoves(blackMoves);
 }
 
-int main() {
+UIApp main() {
     testAvailableMovesChess();
 
     loc filename = |cwd:///example/chess.dsl|;
     GameDef game = parseCheckGameModelFile(filename);
 
     GameplayState state = newGameplayState(game);
-    displayASCIIBoard(game.board, state);
-    state = doFlowGameplay(game);
-    displayASCIIBoard(game.board, state);
-    return 0;
+    return startUI(game, state);
 }
