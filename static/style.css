@@ -14,3 +14,7 @@
   border: 1px solid black;
   border-collapse: collapse;
 }
+
+.cell-hl, .piece-hl {
+  background-color: yellow;
+}
