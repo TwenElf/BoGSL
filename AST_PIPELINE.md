@@ -14,9 +14,11 @@ Pipeline:
 
 ## `Model.rsc`
 `Model.rsc` defines the core AST data types:
-- `GameDef(board, pieces, actions, flow, rules, players)`
+- `GameDef(board, pieces, assignedPieces, actions, flow, rules, players)`
 - `BoardDef(width, height)`
-- `PieceDef(name, directions, moves)`
+- `PieceDef(name, moves)`
+- `PieceAssignmentDef(playerId, pieceId, typeId, direction, initialPosition)`
+- `PositionDef(x, y)`
 - `MoveDef(name, steps)`
 - `ActionDef(pieceId, moveId)`
 - `FlowDef` (`flowDef(startState, endState, states)`)
@@ -38,12 +40,15 @@ Main entrypoint:
 - `toModel(Game gameTree) -> GameDef`
 
 What it does:
-- extracts first `Board`, `Chest`, `Actions`, and `Players` subtree
+- extracts first `Board`, `Chest`, and `Players` subtree
+- extracts optional `Actions` subtree (defaults to empty action list if absent)
 - extracts required `Flow` subtree
 - extracts game-wide rules from top-level `GameRuleProperty` (`rule: <ID>`)
 - extracts piece-wide rules from `PieceRuleProperty` inside each piece (`rule: <ID>`)
 - maps board integers to `BoardDef`
-- maps every `Piece` to `PieceDef`
+- maps every `Piece` (type) to `PieceDef`
+- maps every `PlayerDefinition` `id` to the `players` list
+- maps every `PieceAssignment` (nested inside each `PlayerDefinition`) to `PieceAssignmentDef`
 - maps `FacingDirection` to `Facing`
 - maps `Movement` and `Direction` to `MoveDef` and `Step`
 - maps each `Action` to `ActionDef`
@@ -65,15 +70,23 @@ Main entrypoint:
 - `checkSemantics(GameDef game) -> list[SemanticError]`
 
 Current checks:
-- duplicate piece IDs (`DuplicatePiece`)
-- missing piece direction (`MissingPieceDirection`)
-- multiple piece directions (`MultiplePieceDirections`)
-- duplicate move IDs inside one piece (`DuplicateMove`)
+- duplicate piece type IDs (`DuplicatePiece`)
+- duplicate move IDs inside one piece type (`DuplicateMove`)
+- duplicate assigned piece IDs (`DuplicateAssignedPiece`)
+- assigned piece references unknown player (`UnknownAssignedPiecePlayer`)
+- assigned piece references unknown type (`UnknownAssignedPieceType`)
+- duplicate assigned positions (`DuplicateAssignedPiecePosition`)
+- assigned piece placed outside board bounds (`AssignedPieceOutOfBounds`)
 - missing player declarations (`MissingPlayers`)
 - duplicate players (`DuplicatePlayer`)
-- action points to unknown piece (`UnknownActionPiece`)
-- action points to unknown move for an existing piece (`UnknownActionMove`)
+- action points to unknown assigned piece (`UnknownActionPiece`)
+- action points to unknown move for that assigned piece type (`UnknownActionMove`)
 - duplicate flow states (`DuplicateFlowState`)
+- flow state names that are not player IDs or `gameOver` (`InvalidFlowStateActor`)
+- flow start that is not a player ID (`InvalidFlowStartPlayer`)
+- flow end that is not `gameOver` (`InvalidFlowEndState`)
+- ambiguous multiple transitions for one flow event in one state (`AmbiguousFlowEventTransition`)
+- missing required `moved`/`noMoves` transitions in non-`gameOver` states (`MissingFlowEventTransition`)
 - duplicate flow transitions (`DuplicateFlowTransition`)
 - unknown flow start/end states (`UnknownFlowStart`, `UnknownFlowEnd`)
 - unknown flow transition targets (`UnknownFlowTransitionTarget`)
@@ -81,6 +94,17 @@ Current checks:
 - duplicate game-wide rules (`DuplicateGameRule`)
 - duplicate piece-wide rules per piece (`DuplicatePieceRule`)
 - piece-wide rules that target unknown pieces (`UnknownPieceRulePiece`)
+
+## Runtime flow wiring (`Gameplay.rsc`)
+
+Gameplay now follows the flow machine directly:
+- `availableMoves(game, state, playerId)` computes legal candidate moves for one player
+- `doFlowTurn(state, game)` executes one turn and triggers either `moved` or `noMoves`
+- `doFlowGameplay(game)` iterates flow transitions until `end` is reached (`gameOver`)
+
+Transition resolution is event-based:
+- if the current player has at least one legal move, one is executed and event `moved` is emitted
+- otherwise event `noMoves` is emitted
 
 ## Parser API integration
 `Parser.rsc` exposes AST and semantic-check helpers:
@@ -101,10 +125,10 @@ In Rascal REPL:
 ```rascal
 import Parser;
 
-g = parseGameModelFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame3.dsl|);
-errs = checkGameModelFile(|file:///Users/gbianchi/dev/BoGSL/src/main/rascal/exampleGame3.dsl|);
+g = parseGameModelFile(|cwd:///example/chess.dsl|);
+errs = checkGameModelFile(|cwd:///example/chess.dsl|);
 ```
 
 `g` contains the normalized game model.
 `errs` contains all semantic errors found in that model.
-Use `exampleGame3.dsl` for a chess-like sample covering node-based flow, one game rule, and `enPassant` as a piece rule on `pawn`.
+Use `example/chess.dsl` for a chess-like sample covering node-based flow, one game rule, `enPassant` as a piece rule on `pawn`, and explicit per-player piece placement.

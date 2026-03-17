@@ -8,18 +8,19 @@ import Syntax;
 GameDef toModel(Game gameTree) {
   Board boardTree = firstBoard(gameTree);
   Chest chestTree = firstChest(gameTree);
-  Actions actionsTree = firstActions(gameTree);
   Players playersTree = firstPlayers(gameTree);
   Flow flowTree = firstFlow(gameTree);
 
   FlowDef flow = toFlowDef(flowTree);
   list[RuleDef] rules = toGameRuleDefs(gameTree) + toPieceRuleDefs(chestTree);
   list[str] players = toPlayers(playersTree);
+  list[PieceAssignmentDef] assignedPieces = toPieceAssignments(playersTree);
 
   return gameDef(
     toBoardDef(boardTree),
     toPieceDefs(chestTree),
-    toActionDefs(actionsTree),
+    assignedPieces,
+    toOptionalActionDefs(gameTree),
     flow,
     rules,
     players
@@ -52,17 +53,21 @@ private Chest firstChest(Game gameTree) {
   return chests[0];
 }
 
-private Actions firstActions(Game gameTree) {
+private list[ActionDef] toOptionalActionDefs(Game gameTree) {
   list[Actions] allActions = [];
   visit(gameTree) {
     case Actions actionsTree: allActions += [actionsTree];
   }
 
   if (size(allActions) == 0) {
-    throw "Game has no actions";
+    return [];
   }
 
-  return allActions[0];
+  if (size(allActions) > 1) {
+    throw "Game has multiple actions blocks";
+  }
+
+  return toActionDefs(allActions[0]);
 }
 
 private Players firstPlayers(Game gameTree) {
@@ -106,10 +111,88 @@ BoardDef toBoardDef(Board boardTree) {
 
 list[str] toPlayers(Players playersTree) {
   list[str] players = [];
-  visit(playersTree) {
-    case PlayerName playerTree: players += [trim(unparse(playerTree))];
+  for (definition <- playerDefinitions(playersTree)) {
+    players += [toPlayerId(definition)];
   }
   return players;
+}
+
+private list[PlayerDefinition] playerDefinitions(Players playersTree) {
+  list[PlayerDefinition] definitions = [];
+  visit(playersTree) {
+    case PlayerDefinition definitionTree: definitions += [definitionTree];
+  }
+  return definitions;
+}
+
+private str toPlayerId(PlayerDefinition playerDefinitionTree) {
+  str playerId = "";
+  visit(playerDefinitionTree) {
+    case PlayerName playerTree: if (playerId == "") playerId = trim(unparse(playerTree));
+  }
+  if (playerId == "") {
+    throw "Player definition must define an id";
+  }
+  return playerId;
+}
+
+list[PieceAssignmentDef] toPieceAssignments(Players playersTree) {
+  list[PieceAssignmentDef] assignments = [];
+  for (playerDefinitionTree <- playerDefinitions(playersTree)) {
+    assignments += toPieceAssignments(playerDefinitionTree);
+  }
+  return assignments;
+}
+
+private list[PieceAssignmentDef] toPieceAssignments(PlayerDefinition playerDefinitionTree) {
+  str playerId = toPlayerId(playerDefinitionTree);
+  list[PieceAssignmentDef] assignments = [];
+  visit(playerDefinitionTree) {
+    case PieceAssignment pieceAssignmentTree: assignments += [toPieceAssignmentDef(playerId, pieceAssignmentTree)];
+  }
+  return assignments;
+}
+
+PieceAssignmentDef toPieceAssignmentDef(str playerId, PieceAssignment pieceAssignmentTree) {
+  str pieceId = "";
+  str typeId = "";
+  list[Facing] directions = [];
+  list[PositionDef] positions = [];
+
+  visit(pieceAssignmentTree) {
+    case AssignedPiece pieceNameTree: if (pieceId == "") pieceId = trim(unparse(pieceNameTree));
+    case AssignedPieceType typeTree: if (typeId == "") typeId = trim(unparse(typeTree));
+    case FacingDirection directionTree: directions += [toFacing(directionTree)];
+    case InitialPosition positionTree: positions += [toPositionDef(positionTree)];
+  }
+
+  if (pieceId == "") {
+    throw "Piece assignment has no piece identifier";
+  }
+  if (typeId == "") {
+    throw "Piece assignment <pieceId> must define exactly one type";
+  }
+  if (size(directions) != 1) {
+    throw "Piece assignment <pieceId> must define exactly one direction";
+  }
+  if (size(positions) != 1) {
+    throw "Piece assignment <pieceId> must define exactly one initialPosition";
+  }
+
+  return pieceAssignmentDef(playerId, pieceId, typeId, directions[0], positions[0]);
+}
+
+PositionDef toPositionDef(InitialPosition positionTree) {
+  list[int] coords = [];
+  visit(positionTree) {
+    case Integer valueTree: coords += [toInt(unparse(valueTree))];
+  }
+
+  if (size(coords) != 2) {
+    throw "initialPosition must define x and y";
+  }
+
+  return positionDef(coords[0], coords[1]);
 }
 
 FlowDef toFlowDef(Flow flowTree) {
@@ -196,12 +279,10 @@ list[RuleDef] toPieceRuleDefs(Piece pieceTree) {
 
 PieceDef toPieceDef(Piece pieceTree) {
   str pieceName = "";
-  list[Facing] directions = [];
   list[MoveDef] moves = [];
 
   visit(pieceTree) {
-    case ID nameTree: if (pieceName == "") pieceName = unparse(nameTree);
-    case FacingDirection directionTree: directions += [toFacing(directionTree)];
+    case ID nameTree: if (pieceName == "") pieceName = trim(unparse(nameTree));
     case Movement movementTree: moves += [toMoveDef(movementTree)];
   }
 
@@ -209,7 +290,7 @@ PieceDef toPieceDef(Piece pieceTree) {
     throw "Piece has no identifier";
   }
 
-  return pieceDef(pieceName, directions, moves);
+  return pieceDef(pieceName, moves);
 }
 
 Facing toFacing(FacingDirection directionTree) {

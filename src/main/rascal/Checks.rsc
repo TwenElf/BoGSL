@@ -6,15 +6,23 @@ import Model;
 import Set;
 
 data SemanticError
-  = DuplicatePiece(str pieceId)
-  | MissingPieceDirection(str pieceId)
-  | MultiplePieceDirections(str pieceId, int count)
-  | DuplicateMove(str pieceId, str moveId)
+  = DuplicatePiece(str pieceTypeId)
+  | DuplicateMove(str pieceTypeId, str moveId)
+  | DuplicateAssignedPiece(str pieceId)
+  | UnknownAssignedPiecePlayer(str pieceId, str playerId)
+  | UnknownAssignedPieceType(str pieceId, str typeId)
+  | DuplicateAssignedPiecePosition(str pieceId, int x, int y)
+  | AssignedPieceOutOfBounds(str pieceId, int x, int y, int width, int height)
   | MissingPlayers()
   | DuplicatePlayer(str playerId)
   | UnknownActionPiece(str pieceId)
   | UnknownActionMove(str pieceId, str moveId)
   | DuplicateFlowState(str stateId)
+  | InvalidFlowStateActor(str stateId)
+  | InvalidFlowStartPlayer(str stateId)
+  | InvalidFlowEndState(str stateId)
+  | AmbiguousFlowEventTransition(str fromState, str event)
+  | MissingFlowEventTransition(str fromState, str event)
   | DuplicateFlowTransition(str fromState, str event, str toState)
   | UnknownFlowStart(str stateId)
   | UnknownFlowEnd(str stateId)
@@ -29,15 +37,27 @@ list[SemanticError] checkSemantics(GameDef game) {
   list[SemanticError] errors = [];
 
   switch (game) {
-    case gameDef(_, list[PieceDef] pieces, list[ActionDef] actions, FlowDef flow, list[RuleDef] rules, list[str] players): {
-      set[str] pieceIds = {};
-      map[str, set[str]] movesByPiece = ();
-      set[str] playerIds = {};
+    case gameDef(BoardDef board, list[PieceDef] pieces, list[PieceAssignmentDef] assignedPieces, list[ActionDef] actions, FlowDef flow, list[RuleDef] rules, list[str] players): {
+      set[str] pieceTypeIds = {};
+      map[str, set[str]] movesByType = ();
+      set[str] assignedPieceIds = {};
+      map[str, set[str]] movesByAssignedPiece = ();
+      set[tuple[int, int]] occupiedPositions = {};
+
+      int boardWidth = 0;
+      int boardHeight = 0;
+      switch (board) {
+        case boardDef(int width, int height): {
+          boardWidth = width;
+          boardHeight = height;
+        }
+      }
 
       if (size(players) == 0) {
         errors += [MissingPlayers()];
       }
 
+      set[str] playerIds = {};
       for (playerId <- players) {
         if (playerId in playerIds) {
           errors += [DuplicatePlayer(playerId)];
@@ -48,17 +68,11 @@ list[SemanticError] checkSemantics(GameDef game) {
 
       for (piece <- pieces) {
         switch (piece) {
-          case pieceDef(str pieceId, list[Facing] directions, list[MoveDef] moves): {
-            if (pieceId in pieceIds) {
-              errors += [DuplicatePiece(pieceId)];
+          case pieceDef(str pieceTypeId, list[MoveDef] moves): {
+            if (pieceTypeId in pieceTypeIds) {
+              errors += [DuplicatePiece(pieceTypeId)];
             } else {
-              pieceIds += {pieceId};
-            }
-
-            if (size(directions) == 0) {
-              errors += [MissingPieceDirection(pieceId)];
-            } else if (size(directions) > 1) {
-              errors += [MultiplePieceDirections(pieceId, size(directions))];
+              pieceTypeIds += {pieceTypeId};
             }
 
             set[str] moveIds = {};
@@ -66,7 +80,7 @@ list[SemanticError] checkSemantics(GameDef game) {
               switch (move) {
                 case moveDef(str moveId, _): {
                   if (moveId in moveIds) {
-                    errors += [DuplicateMove(pieceId, moveId)];
+                    errors += [DuplicateMove(pieceTypeId, moveId)];
                   } else {
                     moveIds += {moveId};
                   }
@@ -74,7 +88,41 @@ list[SemanticError] checkSemantics(GameDef game) {
               }
             }
 
-            movesByPiece[pieceId] = moveIds;
+            movesByType[pieceTypeId] = moveIds;
+          }
+        }
+      }
+
+      for (assignment <- assignedPieces) {
+        switch (assignment) {
+          case pieceAssignmentDef(str playerId, str pieceId, str typeId, _, positionDef(int x, int y)): {
+            if (pieceId in assignedPieceIds) {
+              errors += [DuplicateAssignedPiece(pieceId)];
+            } else {
+              assignedPieceIds += {pieceId};
+            }
+
+            if (!(playerId in playerIds)) {
+              errors += [UnknownAssignedPiecePlayer(pieceId, playerId)];
+            }
+
+            if (!(typeId in pieceTypeIds)) {
+              errors += [UnknownAssignedPieceType(pieceId, typeId)];
+              movesByAssignedPiece[pieceId] = {};
+            } else {
+              movesByAssignedPiece[pieceId] = movesByType[typeId];
+            }
+
+            tuple[int, int] pos = <x, y>;
+            if (pos in occupiedPositions) {
+              errors += [DuplicateAssignedPiecePosition(pieceId, x, y)];
+            } else {
+              occupiedPositions += {pos};
+            }
+
+            if (x < 0 || x >= boardWidth || y < 0 || y >= boardHeight) {
+              errors += [AssignedPieceOutOfBounds(pieceId, x, y, boardWidth, boardHeight)];
+            }
           }
         }
       }
@@ -82,29 +130,30 @@ list[SemanticError] checkSemantics(GameDef game) {
       for (action <- actions) {
         switch (action) {
           case actionDef(str pieceId, str moveId): {
-            if (!(pieceId in pieceIds)) {
+            if (!(pieceId in assignedPieceIds)) {
               errors += [UnknownActionPiece(pieceId)];
-            } else if (!(moveId in movesByPiece[pieceId])) {
+            } else if (!(moveId in movesByAssignedPiece[pieceId])) {
               errors += [UnknownActionMove(pieceId, moveId)];
             }
           }
         }
       }
 
-      errors += checkFlowSemantics(flow);
-      errors += checkRuleSemantics(rules, pieceIds);
+      errors += checkFlowSemantics(flow, playerIds);
+      errors += checkRuleSemantics(rules, pieceTypeIds);
     }
   }
 
   return errors;
 }
 
-private list[SemanticError] checkFlowSemantics(FlowDef flow) {
+private list[SemanticError] checkFlowSemantics(FlowDef flow, set[str] playerIds) {
   list[SemanticError] errors = [];
 
   switch (flow) {
     case flowDef(str startState, str endState, list[StateDef] states): {
       set[str] stateIds = {};
+      set[str] validStateActors = playerIds + {"gameOver"};
 
       for (state <- states) {
         switch (state) {
@@ -114,8 +163,20 @@ private list[SemanticError] checkFlowSemantics(FlowDef flow) {
             } else {
               stateIds += {stateId};
             }
+
+            if (!(stateId in validStateActors)) {
+              errors += [InvalidFlowStateActor(stateId)];
+            }
           }
         }
+      }
+
+      if (!(startState in playerIds)) {
+        errors += [InvalidFlowStartPlayer(startState)];
+      }
+
+      if (endState != "gameOver") {
+        errors += [InvalidFlowEndState(endState)];
       }
 
       if (!(startState in stateIds)) {
@@ -130,6 +191,7 @@ private list[SemanticError] checkFlowSemantics(FlowDef flow) {
         switch (state) {
           case stateDef(str fromState, list[TransitionDef] transitions): {
             set[tuple[str, str]] seenTransitions = {};
+            map[str, int] eventCounts = ();
             for (transition <- transitions) {
               switch (transition) {
                 case transitionDef(str event, str toState): {
@@ -143,7 +205,27 @@ private list[SemanticError] checkFlowSemantics(FlowDef flow) {
                   if (!(toState in stateIds)) {
                     errors += [UnknownFlowTransitionTarget(fromState, toState)];
                   }
+
+                  if (!(event in eventCounts)) {
+                    eventCounts[event] = 0;
+                  }
+                  eventCounts[event] += 1;
                 }
+              }
+            }
+
+            if (fromState != "gameOver") {
+              if (!("moved" in eventCounts)) {
+                errors += [MissingFlowEventTransition(fromState, "moved")];
+              }
+              if (!("noMoves" in eventCounts)) {
+                errors += [MissingFlowEventTransition(fromState, "noMoves")];
+              }
+            }
+
+            for (event <- eventCounts) {
+              if (eventCounts[event] > 1) {
+                errors += [AmbiguousFlowEventTransition(fromState, event)];
               }
             }
           }
@@ -188,7 +270,7 @@ private list[SemanticError] checkFlowSemantics(FlowDef flow) {
   return errors;
 }
 
-private list[SemanticError] checkRuleSemantics(list[RuleDef] rules, set[str] pieceIds) {
+private list[SemanticError] checkRuleSemantics(list[RuleDef] rules, set[str] pieceTypeIds) {
   list[SemanticError] errors = [];
   set[str] gameRuleIds = {};
   set[tuple[str, str]] pieceRuleIds = {};
@@ -204,7 +286,7 @@ private list[SemanticError] checkRuleSemantics(list[RuleDef] rules, set[str] pie
       }
 
       case pieceRuleDef(str pieceId, str ruleId): {
-        if (!(pieceId in pieceIds)) {
+        if (!(pieceId in pieceTypeIds)) {
           errors += [UnknownPieceRulePiece(pieceId, ruleId)];
         }
 

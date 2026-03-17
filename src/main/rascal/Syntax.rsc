@@ -11,13 +11,13 @@ lexical Integer
 keyword KW
   = "game" | "chest" | "actions" | "board" | "piece" | "direction" | "move"
   | "north" | "south" | "east" | "west" | "forward" | "backward" | "left" | "right" | "action" | "ID"
-  | "flow" | "start" | "end"
-  | "players" | "machine" | "state"
+  | "flow" | "start" | "end" | "gameOver" | "moved" | "noMoves"
+  | "players" | "id" | "pieces" | "type" | "initialPosition" | "machine" | "state"
   | "rule"
   ;
 
 lexical ID
-  = [A-Za-z_][A-Za-z0-9_]* !>> [A-Za-z0-9_]
+  = [A-Za-z_][A-Za-z0-9_]* !>> [A-Za-z0-9_] \ KW
   ;
 
 lexical MoveID
@@ -44,7 +44,19 @@ syntax GameProperty
   ;
 
 syntax Players
-  = "[" { PlayerName "," }* PlayerName? "]"
+  = "[" { PlayerDefinition "," }* PlayerDefinition? "]"
+  ;
+
+syntax PlayerDefinition
+  = PlayerIdProperty "," PlayerPiecesProperty
+  ;
+
+syntax PlayerIdProperty
+  = "id" ":" PlayerName
+  ;
+
+syntax PlayerPiecesProperty
+  = "pieces" ":" PieceAssignments
   ;
 
 syntax PlayerName
@@ -52,18 +64,60 @@ syntax PlayerName
   ;
 
 
+syntax PieceAssignments
+  = "{" { PieceAssignment "," }* PieceAssignment? "}"
+  ;
+
+syntax PieceAssignment
+  = AssignedPiece ":" "{" PieceAssignmentProperties? "}"
+  ;
+
+syntax PieceAssignmentProperties
+  = PieceAssignmentProperty (","? PieceAssignmentProperty)*
+  ;
+
+syntax PieceAssignmentProperty
+  = TypeAssignmentProperty
+  | DirectionAssignmentProperty
+  | InitialPositionAssignmentProperty
+  ;
+
+syntax TypeAssignmentProperty
+  = "type" ":" AssignedPieceType
+  | "type" AssignedPieceType
+  ;
+
+syntax DirectionAssignmentProperty
+  = "direction" ":" FacingDirection
+  ;
+
+syntax InitialPositionAssignmentProperty
+  = "initialPosition" ":" InitialPosition
+  ;
+
+syntax InitialPosition
+  = "{" "x" ":" Integer "," "y" ":" Integer "}"
+  ;
+
+syntax AssignedPiece
+  = ID
+  ;
+
+syntax AssignedPieceType
+  = ID
+  ;
+
 // ---------- Pieces syntax ----------
 syntax Chest // chest as in pieces chest
-  = "{" {Piece ","}* Piece? "}"
+  = "[" {Piece ","}* Piece? "]"
   ;
 
 syntax Piece
-  = "piece" ID ":" "{" { Properties "," }* Properties? "}"
+  = "piece" ID ":" "{" { PieceProperty "," }* PieceProperty? "}"
   ;
 
-syntax Properties
-  = "direction" ":" FacingDirection
-  | "move" Movement
+syntax PieceProperty
+  = "move" Movement
   | PieceRuleProperty
   ;
 
@@ -109,15 +163,15 @@ syntax Flow
   ;
 
 syntax StartState
-  = ID
+  = PlayerName
   ;
 
 syntax EndState
-  = ID
+  = GameOverState
   ;
 
 syntax Machine
-  = "{" { FlowState "," }* FlowState? "}"
+  = "[" { FlowState "," }* FlowState? "]"
   ;
 
 syntax FlowState
@@ -125,7 +179,7 @@ syntax FlowState
   ;
 
 syntax StateName
-  = ID
+  = PlayerName
   ;
 
 syntax StateTransition
@@ -137,11 +191,12 @@ syntax StateTransitions
   ;
 
 syntax TransitionEvent
-  = ID
+  = "moved"
+  | "noMoves"
   ;
 
 syntax TransitionTarget
-  = ID
+  = PlayerName
   ;
 
 
@@ -194,4 +249,8 @@ syntax Loop
 
 syntax RuleID
   = ID
+  ;
+
+syntax GameOverState
+  = "gameOver"
   ;

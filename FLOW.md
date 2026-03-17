@@ -1,87 +1,74 @@
 # Game Flow Design
 
-This document defines the BoGSL game-flow state machine in the node/edge style:
-- a machine is a set of nodes (`state`)
-- each node has zero or more outgoing transitions
-- each transition is written as `event -> targetNode`
+This document describes the current BoGSL flow machine and how it is wired to gameplay execution.
 
-## Core Model
+## Flow Model
 
-Flow is a directed graph:
-- `start`: entry node
-- `end`: terminal node
-- `machine`: node declarations
+Flow is a directed state machine:
+- `start`: the current player state where execution begins
+- `end`: terminal state, fixed to `gameOver`
+- `machine`: explicit state declarations and transitions
 
-A node declaration:
-- has a unique node name
-- contains zero or more outgoing transitions
+A state declaration:
+- has a unique state name
+- has zero or more transitions (`state gameOver: {}` is the terminal state)
 
 A transition:
-- has an event label (`event`)
-- points to a target node (`targetNode`)
-- syntax: `event -> targetNode`
+- has an event label
+- points to a target state
+- syntax: `<event> -> <state>`
 
-This naturally supports:
-- branching (one node to many targets)
-- merging (many nodes to one target)
-- self-loops (`tick -> sameNode`)
-- turn loops (for example white turn -> black turn -> white turn)
-
-## DSL Syntax
+## Current DSL Shape
 
 ```dsl
 flow: {
-  start: setup,
+  start: white,
   end: gameOver,
-  machine: {
-    state setup: {
-      startGame -> playerTurnWhite
+  machine: [
+    state white: {
+      moved -> black,
+      noMoves -> gameOver
     },
-    state playerTurnWhite: {
-      move -> resolveWhite,
-      resign -> gameOver
-    },
-    state resolveWhite: {
-      next -> playerTurnBlack,
-      checkmate -> gameOver
-    },
-    state playerTurnBlack: {
-      move -> resolveBlack,
-      resign -> gameOver
-    },
-    state resolveBlack: {
-      next -> playerTurnWhite,
-      checkmate -> gameOver
+    state black: {
+      moved -> white,
+      noMoves -> gameOver
     },
     state gameOver: {}
-  }
+  ]
 }
 ```
 
-## AST Representation
+Events currently supported by grammar:
+- `moved`
+- `noMoves`
 
-- `FlowDef = flowDef(startState, endState, states)`
-- `StateDef = stateDef(name, transitions)`
-- `TransitionDef = transitionDef(event, toState)`
+## Runtime Wiring
 
-## Current Validation
+Gameplay uses the flow machine directly (`Gameplay.rsc`):
+
+- `availableMoves(game, state, playerId)` computes legal moves for that player from all moves defined by each of that player's assigned pieces.
+- `doFlowTurn(state, game)` executes one turn:
+  - if at least one move is available, execute one and emit `moved`
+  - otherwise emit `noMoves`
+  - advance to the transition target for that event
+- `doFlowGameplay(game)` loops `doFlowTurn` until `end` is reached (`gameOver`).
+
+Move legality currently checks:
+- move belongs to one of the player's assigned pieces
+- target position is inside board bounds
+
+## Validation Rules
 
 Structural checks:
-- exactly one `flow` block in a game
+- exactly one `flow` block is required in a game
 
-Semantic checks:
+Semantic checks (`Checks.rsc`):
+- state names must be in `players ∪ {gameOver}`
+- `start` must be a player id
+- `end` must be `gameOver`
 - no duplicate state names
-- no duplicate transitions inside one state with the same `(event, target)` pair
-- transition targets must refer to declared states
-- `start` and `end` must refer to declared states
+- no duplicate transitions `(event, target)` inside one state
+- no unknown transition targets
+- no unknown start/end state references
+- non-`gameOver` states must define exactly one `moved` transition and one `noMoves` transition
 - `end` must be reachable from `start`
-
-## Notes on Player Order
-
-Player order is modeled by your node topology and transition edges.
-For example:
-- `playerTurnWhite` node transitions to `playerTurnBlack`
-- `playerTurnBlack` transitions back to `playerTurnWhite`
-- either can transition to `gameOver` when a rule-trigger event occurs
-
-Rule evaluation that triggers events is intentionally outside the flow checker and can be added in later execution logic.
