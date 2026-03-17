@@ -5,6 +5,7 @@ import Gameplay;
 import Parser;
 import Display;
 import Model;
+import Interactive;
 
 void printAvailableMoves(list[AvailableMove] moves) {
     if (moves == []) {
@@ -34,15 +35,21 @@ void testAvailableMovesChess() {
     printAvailableMoves(blackMoves);
 }
 
+// int main() {
+//     testAvailableMovesChess();
+
+//     loc filename = |cwd:///example/chess.dsl|;
+//     GameDef game = parseCheckGameModelFile(filename);
+
+//     GameplayState state = newGameplayState(game);
+//     displayASCIIBoard(game.board, state);
+//     state = doFlowGameplay(game);
+//     displayASCIIBoard(game.board, state);
+//     return 0;
+// }
+// example comment
+// Attempt at running an interactive game.
 int main() {
-    testAvailableMovesChess();
-
-    loc filename = |cwd:///example/chess.dsl|;
-    GameDef game = parseCheckGameModelFile(filename);
-
-    GameplayState state = newGameplayState(game);
-    displayASCIIBoard(game.board, state);
-    state = doFlowGameplay(game);
-    displayASCIIBoard(game.board, state);
-    return 0;
+  playInteractive(|cwd:///example/chess.dsl|);
+  return 0;
 }
