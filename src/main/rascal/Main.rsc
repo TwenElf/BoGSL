@@ -47,7 +47,7 @@ void testAvailableMovesChess() {
 //     displayASCIIBoard(game.board, state);
 //     return 0;
 // }
-
+// example comment
 // Attempt at running an interactive game.
 int main() {
   playInteractive(|cwd:///example/chess.dsl|);
