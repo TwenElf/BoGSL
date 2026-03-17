@@ -53,19 +53,8 @@ private void viewCell(UIState state, int x, int y) {
   });
 }
 
-// Render HTML using the state
-private void view(UIState state) {
-  BoardDef board = state.game.board;
-  p("Flow state: <state.gameplay.flowState>");
-  div(
-    class("grid"),
-    style(("--rows": "<board.height>", "--cols": "<board.width>")),
-    () {
-      for (int y <- [0..board.height], int x <- [0..board.width]) {
-        viewCell(state, x, y);
-      }
-    }
-  );
+// Render the list with action buttons
+private void viewActionList(UIState state) {
   ul(() {
     for (AvailableMove move <- currentPlayerAvailableMoves(state.game, state.gameplay)) {
       li(() {
@@ -77,6 +66,26 @@ private void view(UIState state) {
         );
       });
     }
+  });
+}
+
+// Render HTML using the state
+private void view(UIState state) {
+  BoardDef board = state.game.board;
+  div(class("h-flexbox"), () {
+    div(
+      class("grid"),
+      style(("--rows": "<board.height>", "--cols": "<board.width>")),
+      () {
+        for (int y <- [0..board.height], int x <- [0..board.width]) {
+          viewCell(state, x, y);
+        }
+      }
+    );
+    div(() {
+      p("Flow state: <state.gameplay.flowState>");
+      viewActionList(state);
+    });
   });
 }
 
