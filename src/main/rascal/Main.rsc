@@ -1,10 +1,10 @@
 module Main
 
 import IO;
-import Gameplay;
 import Parser;
-import Display;
 import Model;
+import Gameplay;
+import Display;
 
 void printAvailableMoves(list[AvailableMove] moves) {
     if (moves == []) {
@@ -35,14 +35,15 @@ void testAvailableMovesChess() {
 }
 
 int main() {
-    testAvailableMovesChess();
+    //testAvailableMovesChess();
 
     loc filename = |cwd:///example/chess.dsl|;
     GameDef game = parseCheckGameModelFile(filename);
+    //println(game);
 
     GameplayState state = newGameplayState(game);
-    displayASCIIBoard(game.board, state);
+    //displayASCIIBoard(game.board, state);
     state = doFlowGameplay(game);
-    displayASCIIBoard(game.board, state);
+    //displayASCIIBoard(game.board, state);
     return 0;
 }

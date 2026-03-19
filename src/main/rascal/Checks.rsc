@@ -277,7 +277,7 @@ private list[SemanticError] checkRuleSemantics(list[RuleDef] rules, set[str] pie
 
   for (rule <- rules) {
     switch (rule) {
-      case gameRuleDef(str ruleId): {
+      case gameRuleDef(str ruleId, _): {
         if (ruleId in gameRuleIds) {
           errors += [DuplicateGameRule(ruleId)];
         } else {

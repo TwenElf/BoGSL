@@ -13,7 +13,7 @@ keyword KW
   | "north" | "south" | "east" | "west" | "forward" | "backward" | "left" | "right" | "action" | "ID"
   | "flow" | "start" | "end" | "gameOver" | "moved" | "noMoves"
   | "players" | "id" | "pieces" | "type" | "initialPosition" | "machine" | "state"
-  | "rule"
+  | "rule" | "current" | "any" | "capture" | "move" | "piece" 
   ;
 
 lexical ID
@@ -212,36 +212,45 @@ syntax Rules
   ;
 
 syntax Rule
-  = "rule" RuleID ":"  RuleParts*
+  = "rule" RuleType RuleID ":"  RuleParts
   ;
 
-// syntax RuleProperties
-//   = "piece" RuleName ":" RuleParts*
-//   ;
+syntax RuleType
+  = "Movement"
+  | "EndTurn"
+  | "StartTurn"
+  ;
+
 syntax RuleParts
-  = "move" "piece" "any"
-  | "other player"
-  | "piece" ID
+  =  RuleParts Logicals RuleParts
+  >  RuleParts Arrow RuleParts// reusing arrow for move to
+  > "(" RuleParts ")"
+  | "move" "piece" "any"
+  | "move" "piece" "current"
+  | "other" "player" "piece" "any"
+  | "other" "player" "piece" "current"
+  //| "other" "player" "piece"  ID  // TODO: make this work
+  //| "piece"  Determs
   | "boardsize" 
   | "capture" ID
+  | "capture" "any"
+  | "location" RuleLocations
   | "can"
   | Loop
-  | Logicals
   ;
 
-syntax Logicals
-  = "\>"
-  | "\<"
+
+lexical Logicals
+  =  "\<=" // TODO: Implement
+  | "\>=" // TODO: Implement
   | "=="
   | "!="
-  | "and"
+  ? "and"
   | "or"
   | "||"
   | "&&"
-  | "\<="
-  | "\>="
-  | Arrow // reusing arrow for move to
   ;
+
 
 syntax Loop
   = "for" "(" ("each" | "all") "moves" "piece" ID ")"
@@ -253,4 +262,13 @@ syntax RuleID
 
 syntax GameOverState
   = "gameOver"
+  ;
+
+syntax RuleLocations
+  = "{" "x" ":" (Integer| LexicalLocations) "," "y" ":" (Integer| LexicalLocations) "}"
+  ;
+syntax LexicalLocations
+  = "boardedge"
+  | "oposite" "boardedge"
+  | "any"
   ;

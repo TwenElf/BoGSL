@@ -4,6 +4,9 @@ import Model;
 import ParseTree;
 import String;
 import Syntax;
+import Rules;
+
+import IO; // TODO: Remove later
 
 GameDef toModel(Game gameTree) {
   Board boardTree = firstBoard(gameTree);
@@ -369,9 +372,24 @@ ActionDef toActionDef(Action actionTree) {
 list[RuleDef] toGameRuleDefs(Game gameTree) {
   list[RuleDef] rules = [];
   visit(gameTree) {
-    case Rule ruleTree: rules += [gameRuleDef(toRuleId(ruleTree), toRuleLogic(ruleTree))];
+    //case (Rule) `rule <RuleType rt> <RuleID id> : <RuleParts* parts>`: {rules += [gameRuleDef(toRuleId(id), toRuleLogic(parts))];}
+    case Rule ruleTree: rules += [toRuleDef(ruleTree)];
   }
   return rules;
+}
+
+
+RuleDef toRuleDef(Rule gameRuleTree){
+  visit(gameRuleTree){
+    case (Rule) `rule <RuleType rt> <RuleID id> : <RuleParts parts>`: {
+      switch(rt){
+        case (RuleType) `Movement`: return moveRuleDef(toRuleId(id), toRuleLogic(parts));
+        case (RuleType) `StartTurn`: return startTurnRuleDef(toRuleId(id), toRuleLogic(parts));
+        case (RuleType) `EndTurn`: return endTurnRuleDef(toRuleId(id), toRuleLogic(parts));
+      }
+    }
+  }
+  throw "GameRule did not contain valid RuleType for tree \n <gameRuleTree>";
 }
 
 str toRuleId(Rule gameRuleTree) {
@@ -384,17 +402,64 @@ str toRuleId(Rule gameRuleTree) {
   }
   return ruleId;
 }
+str toRuleId(RuleID ID) {
+  str ruleId = "";
+  ruleId = trim(unparse(ID));
+  
+  if (ruleId == "") {
+    throw "Game rule must define a rule ID";
+  }
+  return ruleId;
+}
+
 
 list[str] toRuleLogic(Rule gameRuleTree) {
+  println(gameRuleTree);
+
+  
   list[str] logic = [];
   visit(gameRuleTree) {
-    case RuleParts logicTree: logic += [trim(unparse(logicTree))];
+    case RuleParts logicTree: println(toRuleLogic(logicTree));
+    //case RuleParts logicTree: logic += [trim(unparse(logicTree))];
   }
   if (logic == []) {
     throw "Game rule must define logic";
   }
+
+  // for (rule <- rules){
+  //   Rules::parseLogic(rule);
+  // }
   return logic;
 }
+
+private RuleLogic toRuleLogic((RuleParts) `move piece current`)  =  R_movement(R_currentPiece());
+private RuleLogic toRuleLogic((RuleParts) `move piece any`)      =  R_movement(R_anyPiece());
+private RuleLogic toRuleLogic((RuleParts) `other player piece any`)      =  R_movement(R_anyPiece()); // TODO: Fix to get otherplayer
+private RuleLogic toRuleLogic((RuleParts) `location <RuleLocations l>`)      =  toRuleLocation(l);
+private RuleLogic toRuleLocation((RuleLocations) `{x: <Integer x>, y: <Integer y >}`) = R_location(toInt(unparse(x)), toInt(unparse(y)), true, true);
+private RuleLogic toRuleLocation((RuleLocations) `{x: <LexicalLocations x>, y: <Integer y >}`) {
+  // TODO: Implement the logic for later parsing of location
+  return R_location(-99, toInt(unparse(y)), false, true);
+}
+private RuleLogic toRuleLocation((RuleLocations) `{x: <Integer x>, y: <LexicalLocations y >}`){
+  // TODO: Implement the logic for later parsing of location
+  return R_location(toInt(unparse(x)), -99, true, false);
+}
+private RuleLogic toRuleLocation((RuleLocations) `{x: <LexicalLocations x>, y: <LexicalLocations y >}`){
+  // TODO: Implement the logic for later parsing of location
+  return R_location(-99, -99, false, false);
+}
+private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> -\> <RuleParts r>`) =  R_to(toRuleLogic(l), toRuleLogic(r));
+private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> and <RuleParts r>`) =  R_and(toRuleLogic(l), toRuleLogic(r));
+private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> && <RuleParts r>`)  =  R_and(toRuleLogic(l), toRuleLogic(r));
+private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> || <RuleParts r>`)  =  R_or(toRuleLogic(l), toRuleLogic(r));
+private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> == <RuleParts r>`)  =  R_eq(toRuleLogic(l), toRuleLogic(r));
+//private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> != <RuleParts r>`)  =  R_neq(toRuleLogic(l), toRuleLogic(r)); // TODO: figure out what is causing the warnings
+//private RuleLogic toRuleLogic((RuleParts) `piece <ID id>`)  =  R_pieceID(trim(unparse(id)));
+private RuleLogic toRuleLogic((RuleParts) `capture <ID id>`)  =  R_capture(R_pieceID(trim(unparse(id))));
+//private RuleLogic toRuleLogic((RuleParts) `capture any`)  =  R_capture(R_anyPiece);
+
+
 
 str toRuleId(PieceRuleProperty pieceRuleTree) {
   str ruleId = "";

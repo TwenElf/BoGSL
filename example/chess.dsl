@@ -5,7 +5,7 @@ game: {
       wP1: {
         type pawn
         direction: south
-        initialPosition: {x: 0, y: 1}
+        initialPosition: {x: 1, y: 6}
       },
       wK: {
         type king
@@ -18,7 +18,7 @@ game: {
       bP1: {
         type pawn
         direction: north
-        initialPosition: {x: 0, y: 6}
+        initialPosition: {x: 0, y: 3}
       },
       bK: {
         type king
@@ -43,7 +43,6 @@ game: {
       state gameOver: {}
     ]
   },
-  rule: checkmateEndsGame,
   chest: [
     piece pawn: {
       rule: enPassant,
@@ -65,5 +64,11 @@ game: {
     action: {ID: bP1, move: enPassantCapture},
     action: {ID: wK, move: stepB},
     action: {ID: bK, move: stepF}
-  ]
+  ],
+  rules: {
+      rule Movement captureOnMoveOver: move piece current-> other player piece any,
+      rule Movement promote: move piece current  -> location{x: oposite boardedge, y: any},
+      rule Movement promote2: move piece current  -> location{x: 0, y: 0}
+
+  }
 }

@@ -3,6 +3,7 @@ module Gameplay
 import Model;
 import IO;
 import List;
+import Rules;
 
 data PieceState
   = pieceState(int x, int y, Facing facing, map[str, list[Step]] moves)
@@ -152,7 +153,9 @@ GameplayState doFlowTurn(GameplayState state, GameDef game) {
 
   if (size(moves) > 0) {
     AvailableMove chosen = moves[0];
-    state = doAction(state, game, actionDef(chosen.pieceId, chosen.moveId));
+    ActionDef action = actionDef(chosen.pieceId, chosen.moveId);
+    bool valid = checkRules(game, state, action);
+    state = doAction(state, game, action);
     event = "moved";
   }
 
@@ -207,6 +210,7 @@ PieceState doMove(PieceState piece, Step step) {
 GameplayState doActions(GameDef game) {
   GameplayState state = newGameplayState(game);
   for (ActionDef action <- game.actions) {
+    bool valid = checkRules(game, state, action);
     state = doAction(state, game, action);
   }
   return state;
