@@ -36,9 +36,7 @@ void testAvailableMovesChess() {
 }
 
 UIApp main() {
-    testAvailableMovesChess();
-
-    loc filename = |cwd:///example/chess.dsl|;
+    loc filename = |cwd:///example/line.dsl|;
     GameDef game = parseCheckGameModelFile(filename);
 
     GameplayState state = newGameplayState(game);

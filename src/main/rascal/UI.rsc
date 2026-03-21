@@ -10,20 +10,23 @@ import salix::mermaid::FlowChart;
 import Set;
 
 private data UIState
-  = uiState(GameDef game, GameplayState gameplay, set[AvailableMove] hoveredMoves)
+  = uiState(GameDef game, GameplayState gameplay, set[AvailableMove] hoveredMoves, bool hoveredContinue)
   ;
 
 private data Msg
   = doMove(AvailableMove move)
   | mouseEnter(AvailableMove move)
   | mouseLeave(AvailableMove move)
+  | noMove()
+  | continueMouseEnter()
+  | continueMouseLeave()
   ;
 
 alias UIApp = App[UIState];
 
 // Create a new UI state
 private UIState() init(GameDef game, GameplayState gameplay) {
-  UIState initClosure() = uiState(game, gameplay, {});
+  UIState initClosure() = uiState(game, gameplay, {}, false);
   return initClosure;
 }
 
@@ -38,6 +41,9 @@ private UIState update(Msg msg, UIState state) {
     }
     case mouseEnter(move): state.hoveredMoves += {move};
     case mouseLeave(move): state.hoveredMoves -= {move};
+    case noMove(): state.gameplay.flowState = advanceFlow(state.game.flow, state.gameplay.flowState, "noMoves");
+    case continueMouseEnter(): state.hoveredContinue = true;
+    case continueMouseLeave(): state.hoveredContinue = false;
   };
   return state;
 }
@@ -58,8 +64,9 @@ private void viewCell(UIState state, int x, int y) {
 
 // Render the list with action buttons
 private void viewActionList(UIState state) {
+  list[AvailableMove] availableMoves = currentPlayerAvailableMoves(state.game, state.gameplay);
   ul(() {
-    for (AvailableMove move <- currentPlayerAvailableMoves(state.game, state.gameplay)) {
+    for (AvailableMove move <- availableMoves) {
       li(() {
         button(
           onClick(doMove(move)),
@@ -70,6 +77,14 @@ private void viewActionList(UIState state) {
       });
     }
   });
+  if (availableMoves == [] && state.gameplay.flowState != state.game.flow.endState) {
+    button(
+      onClick(noMove()),
+      onMouseEnter(continueMouseEnter()),
+      onMouseLeave(continueMouseLeave()),
+      "Continue"
+    );
+  }
 }
 
 // Render a flow chart with the states and transitions
@@ -93,6 +108,8 @@ private void viewFlowChart(UIState state) {
       for (StateDef srcFlowState <- state.game.flow.states) {
         for (TransitionDef transition <- srcFlowState.transitions) {
           if (state.gameplay.flowState == srcFlowState.name && transition.event == "moved" && state.hoveredMoves != {}) {
+            e(srcFlowState.name, "==\>", transition.toState, transition.event);
+          } else if (state.gameplay.flowState == srcFlowState.name && transition.event == "noMoves" && state.hoveredContinue) {
             e(srcFlowState.name, "==\>", transition.toState, transition.event);
           } else {
             e(srcFlowState.name, "--\>", transition.toState, transition.event);
