@@ -1,4 +1,4 @@
 Manifest-Version: 0.0.1
 Project-Name: BoGSL
 Source: src/main/rascal
-Require-libraries: |lib://salix-core|
+Require-libraries: |lib://salix-core|, |lib://salix-contrib|

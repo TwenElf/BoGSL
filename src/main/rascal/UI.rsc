@@ -5,6 +5,9 @@ import Model;
 import salix::HTML;
 import salix::App;
 import salix::Index;
+import salix::mermaid::ClassDiagram;
+import salix::mermaid::FlowChart;
+import Set;
 
 private data UIState
   = uiState(GameDef game, GameplayState gameplay, set[AvailableMove] hoveredMoves)
@@ -69,6 +72,36 @@ private void viewActionList(UIState state) {
   });
 }
 
+// Render a flow chart with the states and transitions
+private void viewFlowChart(UIState state) {
+  flowChart("flow", "Flow", salix::mermaid::FlowChart::td(),
+    (salix::mermaid::FlowChart::N n, E e, S sub) {
+      set[str] flowStates = {
+        srcFlowState.name, transition.toState
+        | StateDef srcFlowState <- state.game.flow.states,
+          TransitionDef transition <- srcFlowState.transitions
+      };
+
+      for (str flowState <- sort(flowStates)) {
+        if (flowState == state.gameplay.flowState) {
+          n(Shape::sub(), flowState, flowState);
+        } else {
+          n(Shape::square(), flowState, flowState);
+        }
+      }
+
+      for (StateDef srcFlowState <- state.game.flow.states) {
+        for (TransitionDef transition <- srcFlowState.transitions) {
+          if (state.gameplay.flowState == srcFlowState.name && transition.event == "moved" && state.hoveredMoves != {}) {
+            e(srcFlowState.name, "==\>", transition.toState, transition.event);
+          } else {
+            e(srcFlowState.name, "--\>", transition.toState, transition.event);
+          }
+        }
+      }
+  });
+}
+
 // Render HTML using the state
 private void view(UIState state) {
   BoardDef board = state.game.board;
@@ -84,6 +117,7 @@ private void view(UIState state) {
     );
     div(() {
       p("Flow state: <state.gameplay.flowState>");
+      viewFlowChart(state);
       viewActionList(state);
     });
   });
