@@ -6,6 +6,9 @@ import Parser;
 import Display;
 import Model;
 
+import String;   // Required for toInt()
+import List;     // Required for size()
+
 // Helper to show board + current flow state / player
 void displayGameState(GameDef game, GameplayState state) {
   println("Current flow state (player or gameOver): <state.flowState>");
@@ -32,11 +35,11 @@ void playInteractive(loc filename) {
   while (state.flowState != game.flow.endState) {
     displayGameState(game, state);
 
-    // If we are in a non-player state, just stop (should normally be only gameOver)
-    if (!isPlayerState(game, state.flowState)) {
-      println("Non-player flow state <state.flowState>, stopping.");
-      break;
-    }
+    // // If we are in a non-player state, just stop (should normally be only gameOver)
+    // if (!isPlayerState(game, state.flowState)) {
+    //   println("Non-player flow state <state.flowState>, stopping.");
+    //   break;
+    // }
 
     list[AvailableMove] moves = currentPlayerAvailableMoves(game, state);
 
@@ -53,10 +56,12 @@ void playInteractive(loc filename) {
     showAvailableMoves(moves);
 
     println("Choose move index (or -1 to quit): ");
-    str input = readLine("\>\> ");
+    
+    // Need something that can read the inputs
+    str readInput = readFileLines(|stdin:///|)[0];
 
     try {
-      int choice = toInt(input);
+      int choice = toInt(trim(readInput));
       if (choice < 0) {
         println("Game aborted by user.");
         break;
@@ -73,12 +78,12 @@ void playInteractive(loc filename) {
       // See a move was made and use "moved" as the event.
       state = doFlowTurn(state, game);
     }
-    // catch {
-    //   println("Invalid input. Please enter a number.");
-    //   continue;
-    // }
+    catch e: {
+      println("Invalid input. Please enter a number.");
+      continue;
+    }
   }
 
-  displayGameState(game, state);
+  displayASCIIBoard(game.board, state);
   println("Reached flow state <state.flowState>.");
 }
