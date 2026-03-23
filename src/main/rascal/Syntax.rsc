@@ -118,7 +118,7 @@ syntax Piece
 
 syntax PieceProperty
   = "move" Movement
-  | PieceRuleProperty
+  | "move" Movement Rule
   ;
 
 syntax PieceRuleProperty
@@ -212,7 +212,7 @@ syntax Rules
   ;
 
 syntax Rule
-  = "rule" RuleType RuleID ":"  RuleParts
+  = "rule" RuleType RuleID ":"  RuleParts 
   ;
 
 syntax RuleType
@@ -225,6 +225,8 @@ syntax RuleParts
   =  RuleParts Logicals RuleParts
   >  RuleParts Arrow RuleParts// reusing arrow for move to
   > "(" RuleParts ")"
+  | "not" "(" RuleParts ")"
+  | "!" "(" RuleParts ")"
   | "move" "piece" "any"
   | "move" "piece" "current"
   | "other" "player" "piece" "any"

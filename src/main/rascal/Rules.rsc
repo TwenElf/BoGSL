@@ -72,11 +72,14 @@ private bool checkGameRule(GameDef game,  GameplayState state , ActionDef action
 private bool checkGameRule(GameDef game,  GameplayState state , ActionDef action, R_and(RuleLogic left, RuleLogic right)){
   return (checkGameRule(game,   state ,  action, left) && checkGameRule(game,   state ,  action, right));
 }
+private bool checkGameRule(GameDef game,  GameplayState state , ActionDef action, R_not(RuleLogic logic)){
+  return !(checkGameRule(game,   state ,  action, logic));
+}
 
 
 // Check the game rule for a movement going to a location
 private bool checkGameRule(GameDef game,  GameplayState state , ActionDef action, R_to(R_movement(left), RuleLogic right)){
-  println("Moving <left> to <right>");
+  //println("Moving <left> to <right>");
   int moveToX = 0;
   int MoveToY = 0;
   <moveToX, MoveToY> = calcMovement(game,state,action, left);
@@ -110,8 +113,8 @@ private tuple[int x, int y] calcMovement(GameDef game, GameplayState state, Acti
 // if BoardEdge is used it updates the edge based on orientation of the piece.
 private RuleLogic ruleEvalLocation(  GameDef game,  GameplayState state,  ActionDef action,  RuleLogic logic) {
   Facing dir = state.pieces[action.pieceId].facing;
-  println(logic);
-  println("<action.pieceId> <state.pieces[action.pieceId]>");
+  //println(logic);
+  //println("<action.pieceId> <state.pieces[action.pieceId]>");
   switch (logic) {
     case R_location(x, y, xType, yType):{
       switch(xType){
@@ -122,7 +125,7 @@ private RuleLogic ruleEvalLocation(  GameDef game,  GameplayState state,  Action
         case R_boardEdge(true): {y = dir:=northFacing()? 0: game.board.height; yType = R_int();}
         case R_boardEdge(false): {y = dir:=northFacing()?  game.board.height:0; yType = R_int();}
       }
-      println("EvalLocation: x:<x>, y:<y> <xType> <yType>");
+      //println("EvalLocation: x:<x>, y:<y> <xType> <yType>");
       return R_location( x, y, xType, yType);}
     default:
       throw "expected R_location";

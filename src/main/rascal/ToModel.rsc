@@ -312,16 +312,18 @@ Facing toFacing(FacingDirection directionTree) {
 MoveDef toMoveDef(Movement movementTree) {
   str moveName = "";
   list[Step] steps = [];
+  list[RuleDef] rule = [];
 
   visit(movementTree) {
     case MoveID moveIdTree: if (moveName == "") moveName = unparse(moveIdTree);
     case Direction directionTree: steps += [toStep(directionTree)];
+    case Rule ruleTree: rule += [toRuleDef(ruleTree)];
   }
 
   if (moveName == "") {
     throw "Move has no identifier";
   }
-
+  if(rule != []) return moveDef(moveName, steps, rule[0]);
   return moveDef(moveName, steps);
 }
 
@@ -434,6 +436,8 @@ list[str] toRuleLogic(Rule gameRuleTree) {
   return logic;
 }
 private RuleLogic toRuleLogic((RuleParts) `(<RuleParts parts>)`)  = toRuleLogic(parts);
+private RuleLogic toRuleLogic((RuleParts) `! (<RuleParts parts>)`)  = toRuleLogic(parts);
+private RuleLogic toRuleLogic((RuleParts) `not (<RuleParts parts>)`)  = toRuleLogic(parts);
 private RuleLogic toRuleLogic((RuleParts) `move piece current`)  =  R_movement(R_currentPiece());
 private RuleLogic toRuleLogic((RuleParts) `move piece any`)      =  R_movement(R_anyPiece());
 private RuleLogic toRuleLogic((RuleParts) `other player piece any`)      =  R_movement(R_anyPiece()); // TODO: Fix to get otherplayer
