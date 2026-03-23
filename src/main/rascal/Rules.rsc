@@ -30,7 +30,7 @@ public bool checkRules(GameDef game, GameplayState state) {
 
 public bool checkRules(GameDef game, GameplayState state, ActionDef action) {
   list[RuleDef] rules = getRules(game);
-  //println(rules);
+  println(action);
   map[str, bool] results = ();
   for(RuleDef rule <- rules){
     switch (rule) {
@@ -38,6 +38,12 @@ public bool checkRules(GameDef game, GameplayState state, ActionDef action) {
     }
   }
   println(results);
+  for( res <- results){
+    if(results[res] == true){
+      throw "<res> is true for action <action>";
+    }
+  }
+  
   return true;
 }
 
@@ -67,7 +73,13 @@ private bool checkGameRule(GameDef game,  GameplayState state , ActionDef action
   int MoveToY = 0;
   <moveToX, MoveToY> = checkGameRule(game,state,action, left);
   switch(right){
-    case R_location(int x, int y, true, true): return (moveToX == x && MoveToY == y);
+    case R_location(_,_,_,_):right = ruleEvalLocation( game,  state,  action,  right);
+  }
+  //if(right:=R_location())  evalLocation(game,state,action,right);
+  switch(right){
+    case R_location(int x, int y, R_int(), R_int()): return (moveToX == x && MoveToY == y); // check location directly
+    case R_location(int x, int _, R_int(), R_any()): return (moveToX == x); // One of the locations is any possible location
+    case R_location(int _, int y, R_any(), R_int()): return (MoveToY == y); // One of the locations is any possible location
   }
   return false;
 }
@@ -85,11 +97,29 @@ private tuple[int x, int y] checkGameRule(GameDef game, GameplayState state, Act
   return <piece.x, piece.y>;
 }
 
-// private bool checkGameRule(GameDef game, RuleLogic rule, ActionDef action) {
-//   // Placeholder for actual game rule logic checking
-//   //println(rules);
-//   return true;
-// }
+// Updates the location used in a rule based on the current action
+// if BoardEdge is used it updates the edge based on orientation of the piece.
+private RuleLogic ruleEvalLocation(  GameDef game,  GameplayState state,  ActionDef action,  RuleLogic logic) {
+  Facing dir = state.pieces[action.pieceId].facing;
+  println(logic);
+  println("<action.pieceId> <state.pieces[action.pieceId]>");
+  switch (logic) {
+    case R_location(x, y, xType, yType):{
+      switch(xType){
+        case R_boardEdge(true): {x = dir:=northFacing()? 0:game.board.width; xType= R_int();}
+        case R_boardEdge(false): {x = dir:=northFacing()?  game.board.width: 0;  ; xType= R_int();}
+      }
+      switch(yType){
+        case R_boardEdge(true): {y = dir:=northFacing()? 0: game.board.height; yType = R_int();}
+        case R_boardEdge(false): {y = dir:=northFacing()?  game.board.height:0; yType = R_int();}
+      }
+      println("EvalLocation: x:<x>, y:<y> <xType> <yType>");
+      return R_location( x, y, xType, yType);}
+    default:
+      throw "expected R_location";
+  }
+}
+
 
 private list[RuleDef] getRules(GameDef game){
   return game.rules;

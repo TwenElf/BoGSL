@@ -438,18 +438,42 @@ private RuleLogic toRuleLogic((RuleParts) `move piece current`)  =  R_movement(R
 private RuleLogic toRuleLogic((RuleParts) `move piece any`)      =  R_movement(R_anyPiece());
 private RuleLogic toRuleLogic((RuleParts) `other player piece any`)      =  R_movement(R_anyPiece()); // TODO: Fix to get otherplayer
 private RuleLogic toRuleLogic((RuleParts) `location <RuleLocations l>`)      =  toRuleLocation(l);
-private RuleLogic toRuleLocation((RuleLocations) `{x: <Integer x>, y: <Integer y >}`) = R_location(toInt(unparse(x)), toInt(unparse(y)), true, true);
+private RuleLogic toRuleLocation((RuleLocations) `{x: <Integer x>, y: <Integer y >}`) = R_location(toInt(unparse(x)), toInt(unparse(y)), R_int(), R_int());
 private RuleLogic toRuleLocation((RuleLocations) `{x: <LexicalLocations x>, y: <Integer y >}`) {
   // TODO: Implement the logic for later parsing of location
-  return R_location(-99, toInt(unparse(y)), false, true);
+  RuleLogic xType = R_any();
+  switch(x){
+    case (LexicalLocations) `oposite boardedge`: xType = R_boardEdge(true);
+    case (LexicalLocations) `boardedge`: xType = R_boardEdge(false);
+    case (LexicalLocations) `any`: xType = R_any();
+  }
+  return R_location(0, toInt(unparse(y)), xType, R_int());
 }
 private RuleLogic toRuleLocation((RuleLocations) `{x: <Integer x>, y: <LexicalLocations y >}`){
   // TODO: Implement the logic for later parsing of location
-  return R_location(toInt(unparse(x)), -99, true, false);
+  RuleLogic yType = R_any();
+  switch(y){
+    case (LexicalLocations) `oposite boardedge`:yType = R_boardEdge(true);
+    case (LexicalLocations) `boardedge`:        yType = R_boardEdge(false);
+    case (LexicalLocations) `any`:              yType = R_any();
+  }
+  return R_location(toInt(unparse(x)), 0, true, yType);
 }
 private RuleLogic toRuleLocation((RuleLocations) `{x: <LexicalLocations x>, y: <LexicalLocations y >}`){
   // TODO: Implement the logic for later parsing of location
-  return R_location(-99, -99, false, false);
+  RuleLogic xType = R_any();
+  RuleLogic yType = R_any();
+  switch(x){
+    case (LexicalLocations) `oposite boardedge`: xType = R_boardEdge(true);
+    case (LexicalLocations) `boardedge`: xType = R_boardEdge(false);
+    case (LexicalLocations) `any`: xType = R_any();
+  }
+  switch(y){
+    case (LexicalLocations) `oposite boardedge`: yType = R_boardEdge(true);
+    case (LexicalLocations) `boardedge`: yType = R_boardEdge(false);
+    case (LexicalLocations) `any`: yType = R_any();
+  }
+  return R_location(0, 0, xType, yType);
 }
 private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> -\> <RuleParts r>`) =  R_to(toRuleLogic(l), toRuleLogic(r));
 private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> and <RuleParts r>`) =  R_and(toRuleLogic(l), toRuleLogic(r));
@@ -457,8 +481,8 @@ private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> && <RuleParts r>`)  =  
 private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> || <RuleParts r>`)  =  R_or(toRuleLogic(l), toRuleLogic(r));
 private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> == <RuleParts r>`)  =  R_eq(toRuleLogic(l), toRuleLogic(r));
 //private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> != <RuleParts r>`)  =  R_neq(toRuleLogic(l), toRuleLogic(r)); // TODO: figure out what is causing the warnings
-//private RuleLogic toRuleLogic((RuleParts) `piece <ID id>`)  =  R_pieceID(trim(unparse(id)));
-private RuleLogic toRuleLogic((RuleParts) `capture <ID id>`)  =  R_capture(R_pieceID(trim(unparse(id))));
+private RuleLogic toRuleLogic((RuleParts) `piece <ID id>`)  =  R_pieceID(trim(unparse(id)));
+private RuleLogic toRuleLogic((RuleParts) `capture <ID id>`)  =  R_capture(R_pieceRef(trim(unparse(id))));
 //private RuleLogic toRuleLogic((RuleParts) `capture any`)  =  R_capture(R_anyPiece);
 
 
