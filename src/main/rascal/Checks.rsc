@@ -4,6 +4,7 @@ import List;
 import Map;
 import Model;
 import Model::Rule;
+import Model::Gameplay;
 import Set;
 
 data SemanticError

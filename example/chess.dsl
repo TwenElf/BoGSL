@@ -67,6 +67,6 @@ game: {
   ],
   rules: {
       rule Movement captureOnMoveOver: move piece current-> other player piece any,
-      rule Movement promote: move piece current  -> location{x: any, y: oposite boardedge},
+      rule Movement promote: move piece current  -> location{x: any, y: oposite boardedge}
   }
 }
