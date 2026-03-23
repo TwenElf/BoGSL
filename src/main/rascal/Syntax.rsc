@@ -245,7 +245,7 @@ lexical Logicals
   | "\>=" // TODO: Implement
   | "=="
   | "!="
-  ? "and"
+  | "and"
   | "or"
   | "||"
   | "&&"

@@ -433,14 +433,26 @@ list[str] toRuleLogic(Rule gameRuleTree) {
   // }
   return logic;
 }
-
+private RuleLogic toRuleLogic((RuleParts) `(<RuleParts parts>)`)  = toRuleLogic(parts);
 private RuleLogic toRuleLogic((RuleParts) `move piece current`)  =  R_movement(R_currentPiece());
 private RuleLogic toRuleLogic((RuleParts) `move piece any`)      =  R_movement(R_anyPiece());
 private RuleLogic toRuleLogic((RuleParts) `other player piece any`)      =  R_movement(R_anyPiece()); // TODO: Fix to get otherplayer
 private RuleLogic toRuleLogic((RuleParts) `location <RuleLocations l>`)      =  toRuleLocation(l);
+private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> -\> <RuleParts r>`) =  R_to(toRuleLogic(l), toRuleLogic(r));
+private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> and <RuleParts r>`) =  R_and(toRuleLogic(l), toRuleLogic(r));
+private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> && <RuleParts r>`)  =  R_and(toRuleLogic(l), toRuleLogic(r));
+private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> || <RuleParts r>`)  =  R_or(toRuleLogic(l), toRuleLogic(r));
+private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> == <RuleParts r>`)  =  R_eq(toRuleLogic(l), toRuleLogic(r));
+//private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> != <RuleParts r>`)  =  R_neq(toRuleLogic(l), toRuleLogic(r)); // TODO: figure out what is causing the warnings
+//private RuleLogic toRuleLogic((RuleParts) `piece any`)  =  R_anyPiece();
+//private RuleLogic toRuleLogic((RuleParts) `piece <ID id>`)  =  R_pieceRef(trim(unparse(id)));
+//private RuleLogic toRuleLogic((RuleParts) `capture any`)  =  R_capture(R_anyPiece());
+private RuleLogic toRuleLogic((RuleParts) `capture <ID id>`)  =  R_capture(R_pieceRef(trim(unparse(id))));
+//private RuleLogic toRuleLogic((RuleParts) `capture any`)  =  R_capture(R_anyPiece);
+
 private RuleLogic toRuleLocation((RuleLocations) `{x: <Integer x>, y: <Integer y >}`) = R_location(toInt(unparse(x)), toInt(unparse(y)), R_int(), R_int());
+// Store a location that needs to be determined in game
 private RuleLogic toRuleLocation((RuleLocations) `{x: <LexicalLocations x>, y: <Integer y >}`) {
-  // TODO: Implement the logic for later parsing of location
   RuleLogic xType = R_any();
   switch(x){
     case (LexicalLocations) `oposite boardedge`: xType = R_boardEdge(true);
@@ -449,18 +461,18 @@ private RuleLogic toRuleLocation((RuleLocations) `{x: <LexicalLocations x>, y: <
   }
   return R_location(0, toInt(unparse(y)), xType, R_int());
 }
+// Store a location that needs to be determined in game
 private RuleLogic toRuleLocation((RuleLocations) `{x: <Integer x>, y: <LexicalLocations y >}`){
-  // TODO: Implement the logic for later parsing of location
   RuleLogic yType = R_any();
   switch(y){
     case (LexicalLocations) `oposite boardedge`:yType = R_boardEdge(true);
     case (LexicalLocations) `boardedge`:        yType = R_boardEdge(false);
     case (LexicalLocations) `any`:              yType = R_any();
   }
-  return R_location(toInt(unparse(x)), 0, true, yType);
+  return R_location(toInt(unparse(x)), 0, R_int(), yType);
 }
+// Store two locations that needs to be determined in game
 private RuleLogic toRuleLocation((RuleLocations) `{x: <LexicalLocations x>, y: <LexicalLocations y >}`){
-  // TODO: Implement the logic for later parsing of location
   RuleLogic xType = R_any();
   RuleLogic yType = R_any();
   switch(x){
@@ -475,16 +487,6 @@ private RuleLogic toRuleLocation((RuleLocations) `{x: <LexicalLocations x>, y: <
   }
   return R_location(0, 0, xType, yType);
 }
-private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> -\> <RuleParts r>`) =  R_to(toRuleLogic(l), toRuleLogic(r));
-private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> and <RuleParts r>`) =  R_and(toRuleLogic(l), toRuleLogic(r));
-private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> && <RuleParts r>`)  =  R_and(toRuleLogic(l), toRuleLogic(r));
-private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> || <RuleParts r>`)  =  R_or(toRuleLogic(l), toRuleLogic(r));
-private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> == <RuleParts r>`)  =  R_eq(toRuleLogic(l), toRuleLogic(r));
-//private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> != <RuleParts r>`)  =  R_neq(toRuleLogic(l), toRuleLogic(r)); // TODO: figure out what is causing the warnings
-private RuleLogic toRuleLogic((RuleParts) `piece <ID id>`)  =  R_pieceID(trim(unparse(id)));
-private RuleLogic toRuleLogic((RuleParts) `capture <ID id>`)  =  R_capture(R_pieceRef(trim(unparse(id))));
-//private RuleLogic toRuleLogic((RuleParts) `capture any`)  =  R_capture(R_anyPiece);
-
 
 
 str toRuleId(PieceRuleProperty pieceRuleTree) {

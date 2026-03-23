@@ -272,6 +272,9 @@ private list[SemanticError] checkFlowSemantics(FlowDef flow, set[str] playerIds)
   return errors;
 }
 
+// check for specif rule errors
+// like duplicate rules
+// gameRules contain all rules not tied to a specific piece
 private list[SemanticError] checkRuleSemantics(list[RuleDef] rules, set[str] pieceTypeIds) {
   list[SemanticError] errors = [];
   set[str] gameRuleIds = {};
@@ -279,12 +282,21 @@ private list[SemanticError] checkRuleSemantics(list[RuleDef] rules, set[str] pie
 
   for (rule <- rules) {
     switch (rule) {
+      case moveRuleDef(str ruleId, _): {
+        if (ruleId in gameRuleIds)  errors += [DuplicateGameRule(ruleId)];
+        else gameRuleIds += {ruleId};
+      }
+      case endTurnRuleDef(str ruleId, _): {
+        if (ruleId in gameRuleIds)  errors += [DuplicateGameRule(ruleId)];
+        else gameRuleIds += {ruleId};
+      }
+      case startTurnRuleDef(str ruleId, _): {
+        if (ruleId in gameRuleIds)  errors += [DuplicateGameRule(ruleId)];
+        else gameRuleIds += {ruleId};
+      }
       case gameRuleDef(str ruleId, _): {
-        if (ruleId in gameRuleIds) {
-          errors += [DuplicateGameRule(ruleId)];
-        } else {
-          gameRuleIds += {ruleId};
-        }
+        if (ruleId in gameRuleIds)  errors += [DuplicateGameRule(ruleId)];
+        else gameRuleIds += {ruleId};
       }
 
       case pieceRuleDef(str pieceId, str ruleId): {
