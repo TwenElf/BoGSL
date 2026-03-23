@@ -1,6 +1,8 @@
 module Rules
 
 import Model;
+import Model::Rule;
+import Model::Gameplay;
 import ToModel;
 import Gameplay;
 import List;

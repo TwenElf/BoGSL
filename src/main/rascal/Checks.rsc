@@ -3,6 +3,7 @@ module Checks
 import List;
 import Map;
 import Model;
+import Model::Rule;
 import Set;
 
 data SemanticError

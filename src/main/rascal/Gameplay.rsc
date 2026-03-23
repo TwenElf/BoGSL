@@ -1,21 +1,12 @@
 module Gameplay
 
 import Model;
+import Model::Gameplay;
 import IO;
 import List;
 import Rules;
+import Display;
 
-data PieceState
-  = pieceState(int x, int y, Facing facing, map[str, list[Step]] moves)
-  ;
-
-data GameplayState
-  = gameplayState(str flowState, map[str, PieceState] pieces)
-  ;
-
-data AvailableMove
-  = availableMove(str playerId, str pieceId, str moveId, int targetX, int targetY)
-  ;
 
 // Create a new `PieceState` from a piece assignment and type definition.
 PieceState newPieceState(PieceAssignmentDef assignment, PieceDef pieceType) {

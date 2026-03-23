@@ -3,6 +3,7 @@ module Main
 import IO;
 import Parser;
 import Model;
+import Model::Gameplay;
 import Gameplay;
 import Display;
 

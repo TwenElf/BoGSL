@@ -1,6 +1,8 @@
 module ToModel
 
 import Model;
+import Model::Rule;
+import Model::Gameplay;
 import ParseTree;
 import String;
 import Syntax;

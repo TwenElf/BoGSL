@@ -1,10 +1,11 @@
 module Display
 
-import Gameplay;
 import Model;
+import Model::Gameplay;
 import IO;
 import Syntax;
 import Exception;
+import Gameplay;
 
 
 void displayASCIIBoard(BoardDef board, GameplayState state) {
