@@ -1,4 +1,4 @@
-module Main
+module BoGSL
 
 import IO;
 import Gameplay;

@@ -8,6 +8,7 @@ import salix::Index;
 import salix::mermaid::ClassDiagram;
 import salix::mermaid::FlowChart;
 import Set;
+import util::Webserver;
 
 private data UIState
   = uiState(GameDef game, GameplayState gameplay, set[AvailableMove] hoveredMoves, bool hoveredContinue)
@@ -90,18 +91,20 @@ private void viewActionList(UIState state) {
 // Render a flow chart with the states and transitions
 private void viewFlowChart(UIState state) {
   flowChart("flow", "Flow", salix::mermaid::FlowChart::td(),
-    (salix::mermaid::FlowChart::N n, E e, S sub) {
+    (salix::mermaid::FlowChart::N n, E e, S _sub) {
       set[str] flowStates = {
         srcFlowState.name, transition.toState
         | StateDef srcFlowState <- state.game.flow.states,
           TransitionDef transition <- srcFlowState.transitions
       };
 
+      Shape activeShape = salix::mermaid::FlowChart::sub();
+      Shape inactiveShape = salix::mermaid::FlowChart::square();
       for (str flowState <- sort(flowStates)) {
         if (flowState == state.gameplay.flowState) {
-          n(Shape::sub(), flowState, flowState);
+          n(activeShape, flowState, flowState);
         } else {
-          n(Shape::square(), flowState, flowState);
+          n(inactiveShape, flowState, flowState);
         }
       }
 
@@ -144,5 +147,11 @@ private void view(UIState state) {
 UIApp startUI(GameDef game, GameplayState gameplay) {
   str id = "BoGSL";
   SalixApp[UIState] app = makeApp(id, init(game, gameplay), withIndex("BoGSL", id, view, css = ["/style.css"]), update);
-  return webApp(app, |cwd:///static|);
+  App[UIState] base = webApp(app, |cwd:///static|);
+  return content(id, Response(Request req) {
+    if (get("/salix/salix.js") := req) {
+      return fileResponse(|cwd:///static/salix/salix.js|, "application/javascript", ());
+    }
+    return base.callback(req);
+  });
 }
