@@ -31,6 +31,18 @@
       <artifactId>rascal</artifactId>
       <version>0.40.17</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.rascalmpl</groupId>
+      <artifactId>salix-core</artifactId>
+      <version>0.2.9</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.rascalmpl</groupId>
+        <artifactId>salix-contrib</artifactId>
+        <version>0.2.9</version>
+    </dependency>
   </dependencies>
 
   <build>

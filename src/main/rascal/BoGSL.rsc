@@ -1,10 +1,11 @@
-module Main
+module BoGSL
 
 import IO;
 import Gameplay;
 import Parser;
 import Display;
 import Model;
+import UI;
 
 void printAvailableMoves(list[AvailableMove] moves) {
     if (moves == []) {
@@ -34,15 +35,10 @@ void testAvailableMovesChess() {
     printAvailableMoves(blackMoves);
 }
 
-int main() {
-    testAvailableMovesChess();
-
-    loc filename = |cwd:///example/chess.dsl|;
+UIApp main() {
+    loc filename = |cwd:///example/line.dsl|;
     GameDef game = parseCheckGameModelFile(filename);
 
     GameplayState state = newGameplayState(game);
-    displayASCIIBoard(game.board, state);
-    state = doFlowGameplay(game);
-    displayASCIIBoard(game.board, state);
-    return 0;
+    return startUI(game, state);
 }
