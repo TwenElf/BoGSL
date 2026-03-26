@@ -19,8 +19,8 @@ Game parseGameFile(loc fileloc) {
 
 GameDef parseCheckGameModelFile(loc fileloc){
   GameDef game = parseGameModelFile(fileloc);
-  list[SemanticError] errors= checkSemantics(game);
-  if (  errors != []){
+  list[SemanticErrorAt] errors = checkSemantics(game);
+  if (errors != []) {
       throw("Errors in game file <errors>");
   }
   return game;
