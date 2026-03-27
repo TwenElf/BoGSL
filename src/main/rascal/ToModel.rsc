@@ -25,8 +25,8 @@ GameDef toModel(Game gameTree) {
     flow,
     rules,
     players,
-    just(gameTree),
-    just(playersTree)
+    tree = just(gameTree),
+    playersTree = just(playersTree)
   );
 }
 
@@ -109,7 +109,7 @@ BoardDef toBoardDef(Board boardTree) {
     throw "Board must define width and height";
   }
 
-  return boardDef(values[0], values[1], just(boardTree));
+  return boardDef(values[0], values[1], tree = just(boardTree));
 }
 
 list[str] toPlayers(Players playersTree) {
@@ -182,7 +182,7 @@ PieceAssignmentDef toPieceAssignmentDef(str playerId, PieceAssignment pieceAssig
     throw "Piece assignment <pieceId> must define exactly one initialPosition";
   }
 
-  return pieceAssignmentDef(playerId, pieceId, typeId, directions[0], positions[0], just(pieceAssignmentTree));
+  return pieceAssignmentDef(playerId, pieceId, typeId, directions[0], positions[0], tree = just(pieceAssignmentTree));
 }
 
 PositionDef toPositionDef(InitialPosition positionTree) {
@@ -195,7 +195,7 @@ PositionDef toPositionDef(InitialPosition positionTree) {
     throw "initialPosition must define x and y";
   }
 
-  return positionDef(coords[0], coords[1], just(positionTree));
+  return positionDef(coords[0], coords[1], tree = just(positionTree));
 }
 
 FlowDef toFlowDef(Flow flowTree) {
@@ -213,7 +213,7 @@ FlowDef toFlowDef(Flow flowTree) {
     throw "Flow must define both start and end states";
   }
 
-  return flowDef(startState, endState, states, just(flowTree));
+  return flowDef(startState, endState, states, tree = just(flowTree));
 }
 
 StateDef toStateDef(FlowState stateTree) {
@@ -229,7 +229,7 @@ StateDef toStateDef(FlowState stateTree) {
     throw "Flow state must define a name";
   }
 
-  return stateDef(stateName, transitions, just(stateTree));
+  return stateDef(stateName, transitions, tree = just(stateTree));
 }
 
 TransitionDef toTransitionDef(StateTransition transitionTree) {
@@ -245,7 +245,7 @@ TransitionDef toTransitionDef(StateTransition transitionTree) {
     throw "Flow transition must define event and target state";
   }
 
-  return transitionDef(event, toState, just(transitionTree));
+  return transitionDef(event, toState, tree = just(transitionTree));
 }
 
 list[PieceDef] toPieceDefs(Chest chestTree) {
@@ -277,7 +277,7 @@ list[RuleDef] toPieceRuleDefs(Piece pieceTree) {
     throw "Piece has no identifier";
   }
 
-  return [pieceRuleDef(pieceId, toRuleId(ruleTree), just(ruleTree)) | ruleTree <- ruleTrees];
+  return [pieceRuleDef(pieceId, toRuleId(ruleTree), pieceRuleTree = just(ruleTree)) | ruleTree <- ruleTrees];
 }
 
 PieceDef toPieceDef(Piece pieceTree) {
@@ -293,16 +293,16 @@ PieceDef toPieceDef(Piece pieceTree) {
     throw "Piece has no identifier";
   }
 
-  return pieceDef(pieceName, moves, just(pieceTree));
+  return pieceDef(pieceName, moves, tree = just(pieceTree));
 }
 
 Facing toFacing(FacingDirection directionTree) {
   str directionText = trim(unparse(directionTree));
   switch (directionText) {
-    case "north": return northFacing(just(directionTree));
-    case "south": return southFacing(just(directionTree));
-    case "east": return eastFacing(just(directionTree));
-    case "west": return westFacing(just(directionTree));
+    case "north": return northFacing(tree = just(directionTree));
+    case "south": return southFacing(tree = just(directionTree));
+    case "east": return eastFacing(tree = just(directionTree));
+    case "west": return westFacing(tree = just(directionTree));
     default: throw "Unknown facing direction: <directionText>";
   }
 }
@@ -320,7 +320,7 @@ MoveDef toMoveDef(Movement movementTree) {
     throw "Move has no identifier";
   }
 
-  return moveDef(moveName, steps, just(movementTree));
+  return moveDef(moveName, steps, tree = just(movementTree));
 }
 
 Step toStep(Direction directionTree) {
@@ -337,10 +337,10 @@ Step toStep(Direction directionTree) {
 
   int amount = amounts[0];
 
-  if (startsWith(directionText, "forward")) return forwardStep(amount, just(directionTree));
-  if (startsWith(directionText, "backward")) return backwardStep(amount, just(directionTree));
-  if (startsWith(directionText, "left")) return leftStep(amount, just(directionTree));
-  if (startsWith(directionText, "right")) return rightStep(amount, just(directionTree));
+  if (startsWith(directionText, "forward")) return forwardStep(amount, tree = just(directionTree));
+  if (startsWith(directionText, "backward")) return backwardStep(amount, tree = just(directionTree));
+  if (startsWith(directionText, "left")) return leftStep(amount, tree = just(directionTree));
+  if (startsWith(directionText, "right")) return rightStep(amount, tree = just(directionTree));
 
   throw "Unknown direction: <directionText>";
 }
@@ -366,13 +366,13 @@ ActionDef toActionDef(Action actionTree) {
     throw "Action must define both piece ID and move ID";
   }
 
-  return actionDef(pieceId, moveId, just(actionTree));
+  return actionDef(pieceId, moveId, tree = just(actionTree));
 }
 
 list[RuleDef] toGameRuleDefs(Game gameTree) {
   list[RuleDef] rules = [];
   visit(gameTree) {
-    case GameRuleProperty ruleTree: rules += [gameRuleDef(toRuleId(ruleTree), just(ruleTree))];
+    case GameRuleProperty ruleTree: rules += [gameRuleDef(toRuleId(ruleTree), gameRuleTree = just(ruleTree))];
   }
   return rules;
 }
