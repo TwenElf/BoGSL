@@ -143,6 +143,12 @@ private void view(UIState state) {
   });
 }
 
+// Start the UI and serve it on the given host
+void serveUI(GameDef game, GameplayState gameplay, loc host) {
+  UIApp app = startUI(game, gameplay);
+  serve(host, app.callback, asDaemon = false);
+}
+
 // Start the UI
 UIApp startUI(GameDef game, GameplayState gameplay) {
   str id = "BoGSL";
