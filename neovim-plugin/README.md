@@ -69,4 +69,4 @@ vim.lsp.enable("bogsl_lsp")
 
 The JAR files specified in the config are used to start the LSP.
 
-See [lsp/rascal_lsp.lua](lsp/rascal_lsp.lua) for details.
+See [lsp/bogsl_lsp.lua](lsp/bogsl_lsp.lua) for details.
