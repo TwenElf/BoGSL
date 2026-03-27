@@ -5,6 +5,7 @@ import util::Reflective;
 import util::Maybe;
 import ParseTree;
 import Message;
+import analysis::diff::edits::TextEdits;
 
 import Syntax;
 import ToModel;
@@ -54,6 +55,44 @@ private rel[loc, loc] moveDefinitions(start[Game] g) {
   return (uses + defs<1,0>) o defs;
 }
 
+// Rename the symbol under the cursor.
+private tuple[list[DocumentEdit], set[Message]] renameService(Focus focus, str newName) {
+  if (/start[Game] g := focus) {
+    rel[loc, loc] definitions
+      = playerDefinitions(g)
+      + pieceDefinitions(g)
+      + chestPieceDefinitions(g)
+      + moveDefinitions(g);
+    rel[loc, loc] references = symmetricClosure(definitions)*;
+    rel[loc, str] renamingOptions = {<t.src, newName> | Tree t <- focus};
+    rel[loc, str] renamings = references o renamingOptions;
+    list[TextEdit] edits = [replace(l, s) | <l, s> <- renamings];
+    DocumentEdit docEdit = changed(g.src, edits);
+    return <[docEdit], {}>;
+  }
+  return <[], {error("Renaming failed", focus[0].src.top)}>;
+}
+
+// Check if there is something to rename under the cursor.
+private loc renamePreparingService(Focus focus) {
+  if (/start[Game] g := focus) {
+    rel[loc, loc] definitions
+      = playerDefinitions(g)
+      + pieceDefinitions(g)
+      + chestPieceDefinitions(g)
+      + moveDefinitions(g);
+    rel[loc, loc] references = symmetricClosure(definitions)*;
+    set[loc] identifiers = references<0>;
+    set[loc] focusLocations = {t.src | Tree t <- focus};
+    set[loc] renameSource = identifiers & focusLocations;
+    if (renameSource == {}) {
+      throw "Nothing to rename here";
+    }
+    return focus[0].src;
+  }
+  throw "Renaming failed";
+}
+
 // Analyze the code for errors, definitions and references.
 private Summary analysisService(loc l, start[Game] g) {
   list[SemanticErrorAt] errors = [];
@@ -78,7 +117,8 @@ private Summary analysisService(loc l, start[Game] g) {
 
 set[LanguageService] languageServices() = {
   parsing(parserService),
-  analysis(analysisService)
+  analysis(analysisService),
+  rename(renameService, prepareRenameService = renamePreparingService)
 };
 
 int main() {
