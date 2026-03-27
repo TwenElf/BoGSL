@@ -18,7 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
   };
   console.log(language);
   // rascal vscode needs an instance of this class, if you register multiple languages, they can share this vfs instance
-  const vfs = new VSCodeUriResolverServer(false);
+  const vfs = new VSCodeUriResolverServer(false, vscode.window.createOutputChannel("logger") as vscode.LogOutputChannel);
   // this starts the LSP server and connects it to rascal
   const lsp = new ParameterizedLanguageServer(
     context,

@@ -13,7 +13,6 @@ During runtime:
 - JDK 11
 - Rascal and Rascal LSP `.jar` files
   - The configuration below downloads the needed `.jar` files
-  - Not all Rascal (LSP) versions seem to work, but Rascal 0.40.17 Rascal LSP 2.21.2 work
 
 ## Installation
 
@@ -28,8 +27,8 @@ Using lazy.nvim:
     require("bogsl").setup({})
   end,
   build = "mvn package"
-    .. " && curl https://releases.usethesource.io/maven/org/rascalmpl/rascal/0.40.17/rascal-0.40.17.jar -o target/rascal.jar"
-    .. " && curl https://releases.usethesource.io/maven/org/rascalmpl/rascal-lsp/2.21.2/rascal-lsp-2.21.2.jar -o target/rascal-lsp.jar",
+    .. " && curl https://cdn.jsdelivr.net/npm/@usethesource/rascal-vscode-dsl-lsp-server@0.13.3/assets/jars/rascal.jar -o target/rascal.jar"
+    .. " && curl https://cdn.jsdelivr.net/npm/@usethesource/rascal-vscode-dsl-lsp-server@0.13.3/assets/jars/rascal-lsp.jar -o target/rascal-lsp.jar",
 }
 ```
 
