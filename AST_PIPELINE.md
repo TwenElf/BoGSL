@@ -61,7 +61,7 @@ What it intentionally does not do:
 - global semantic validation (duplicate IDs, unknown references, etc.)
 - execution semantics for moves
 
-Those are handled in `Checks.rsc` and future interpreter/executor modules.
+Those are handled in `Checks.rsc` and `Gameplay.rsc`.
 
 ## `Checks.rsc`
 `Checks.rsc` performs semantic validation on `GameDef`.
@@ -105,6 +105,33 @@ Gameplay now follows the flow machine directly:
 Transition resolution is event-based:
 - if the current player has at least one legal move, one is executed and event `moved` is emitted
 - otherwise event `noMoves` is emitted
+
+## `Display.rsc`
+`Display.rsc` provides a terminal-based board inspection utility:
+- `displayASCIIBoard(board, state)` – prints the board with piece names in their current cells, with row/column labels.
+
+Useful for debugging gameplay state outside the browser UI.
+
+## `UI.rsc`
+`UI.rsc` implements the interactive browser UI using [Salix](https://github.com/usethesource/salix).
+
+Key functions:
+- `startUI(game, state) → UIApp` – builds the Salix app; returns a `UIApp` (`App[UIState]`) for IDE/REPL use.
+- `serveUI(game, state, host)` – wraps `startUI` and immediately starts a standalone HTTP server on `host` in non-daemon mode (used by `bogsl.sh`).
+
+What it renders:
+- Board grid with pieces in their current positions; cells and piece labels highlight when a move targets that cell.
+- Action buttons for every available move; clicking a button executes `doAction` + `advanceFlow("moved")`.
+- A "Continue" button when no moves are available, triggering `advanceFlow("noMoves")`.
+- A live Mermaid flow chart with the current state highlighted.
+
+## `BoGSL.rsc`
+`BoGSL.rsc` is the top-level entry point module.
+
+- `playBoGSL(loc) → UIApp` – parses + checks (`parseCheckGameModelFile`) + starts the UI. Returns a `UIApp` for IDE rendering.
+- `playChess()` – convenience wrapper for `example/chess.dsl`.
+- `playLine()` – convenience wrapper for `example/line.dsl`.
+- `main(list[str] args)` – invoked by `bogsl.sh`; takes `[absPath, port]` and calls `serveUI`.
 
 ## Parser API integration
 `Parser.rsc` exposes AST and semantic-check helpers:
