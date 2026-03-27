@@ -36,11 +36,14 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
-    "prepackage": "cd .. && mvn package && cp target/BoGSL*.jar vscode-extension/assets/jars/bogsl-lsp.jar ",
+    "prepackage": "npm run jar:download-check && cd .. && mvn package && cp target/BoGSL*.jar vscode-extension/assets/jars/bogsl-lsp.jar ",
     "compile": "npx webpack",
     "watch": "npx webpack --watch",
     "package": "npx webpack --mode production --devtool hidden-source-map",
-    "lint": "npx eslint src --ext ts"
+    "lint": "npx eslint src --ext ts",
+    "jar:download": "mkdir -p tmp && curl -L https://github.com/usethesource/rascal-language-servers/releases/download/v0.13.3/rascalmpl-0.13.3.vsix -o tmp/rascal.zip",
+    "jar:unzip": "unzip -o tmp/rascal.zip -d tmp",
+    "jar:download-check": "test -d tmp || (npm run jar:download && npm run jar:unzip)"
   },
   "devDependencies": {
     "@types/node": "16.x",

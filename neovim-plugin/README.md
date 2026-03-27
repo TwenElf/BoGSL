@@ -27,10 +27,19 @@ Using lazy.nvim:
     require("bogsl").setup({})
   end,
   build = "mvn package"
-    .. " && curl https://cdn.jsdelivr.net/npm/@usethesource/rascal-vscode-dsl-lsp-server@0.13.3/assets/jars/rascal.jar -o target/rascal.jar"
-    .. " && curl https://cdn.jsdelivr.net/npm/@usethesource/rascal-vscode-dsl-lsp-server@0.13.3/assets/jars/rascal-lsp.jar -o target/rascal-lsp.jar",
+    .. " && mkdir -p target/tmp"
+    .. " && curl -L https://github.com/usethesource/rascal-language-servers/releases/download/v0.13.3/rascalmpl-0.13.3.vsix -o target/tmp/rascal.zip"
+    .. " && unzip -o target/tmp/rascal.zip -d target/tmp"
+    .. " && mv target/tmp/extension/assets/jars/rascal.jar target"
+    .. " && mv target/tmp/extension/assets/jars/rascal-lsp.jar target",
 }
 ```
+
+> [!Note]
+> The snippet above extracts the latest release VSCode extension,
+> but this is a bit hacky.
+> When Rascal LSP 2.22.3 and Rascal 0.42.1 get released on [Maven](https://mvnrepository.com/search?q=rascal),
+> you should download the `jar` files from there instead.
 
 ## Usage
 
