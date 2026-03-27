@@ -28,7 +28,7 @@ Failure messages include:
 - `No flow defined` / `Multiple flows defined`
 
 Optional block:
-- `actions` may be omitted for interactive gameplay.
+- `actions` may be omitted; when using the browser UI, moves are selected interactively rather than declared upfront.
 - if present more than once: `Multiple actions defined`
 
 ## 3. Conversion-Time Consistency Checks (`ToModel.rsc`)

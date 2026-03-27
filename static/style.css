@@ -1,0 +1,26 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  max-width: min(80vw, calc(80vh / var(--rows) * var(--cols)));
+  max-height: 80vh;
+  aspect-ratio: var(--cols) / var(--rows);
+  flex-grow: 1;
+}
+
+.cell {
+  aspect-ratio: 1 / 1;
+}
+
+.cell, .grid {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+
+.cell-hl, .piece-hl {
+  background-color: yellow;
+}
+
+.h-flexbox {
+  display: flex;
+  gap: 2em;
+}

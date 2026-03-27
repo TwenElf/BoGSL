@@ -47,15 +47,23 @@ Events currently supported by grammar:
 Gameplay uses the flow machine directly (`Gameplay.rsc`):
 
 - `availableMoves(game, state, playerId)` computes legal moves for that player from all moves defined by each of that player's assigned pieces.
+- `advanceFlow(flow, currentState, event)` resolves the next state by finding the single transition matching `event` in `currentState`.
 - `doFlowTurn(state, game)` executes one turn:
   - if at least one move is available, execute one and emit `moved`
   - otherwise emit `noMoves`
-  - advance to the transition target for that event
+  - advance to the transition target for that event via `advanceFlow`
 - `doFlowGameplay(game)` loops `doFlowTurn` until `end` is reached (`gameOver`).
 
 Move legality currently checks:
 - move belongs to one of the player's assigned pieces
 - target position is inside board bounds
+
+### Interactive UI
+In browser mode (`UI.rsc`), the flow machine is driven by the user instead of `doFlowTurn`:
+- The UI displays a button for each available move returned by `currentPlayerAvailableMoves`.
+- Clicking a button executes `doAction` for that move then calls `advanceFlow("moved")`.
+- When no moves are available, a "Continue" button is shown; clicking it calls `advanceFlow("noMoves")`.
+- The current flow state is always visible in the sidebar and highlighted in the Mermaid flow chart.
 
 ## Validation Rules
 

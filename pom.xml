@@ -37,6 +37,18 @@
         <artifactId>rascal-lsp</artifactId>
         <version>2.22.1</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.rascalmpl</groupId>
+      <artifactId>salix-core</artifactId>
+      <version>0.2.9</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.rascalmpl</groupId>
+        <artifactId>salix-contrib</artifactId>
+        <version>0.2.9</version>
+    </dependency>
   </dependencies>
 
   <build>
