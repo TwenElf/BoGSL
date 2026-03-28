@@ -45,12 +45,11 @@ game: {
   },
   chest: [
     piece pawn: {
-      rule: enPassant,
       move advance1: {forward 1},
       move firstMove: {forward 2},
       move captureL: {left 1, forward 1},
       move captureR: {right 1, forward 1},
-      move enPassantCapture: {left 1, forward 1}
+      move enPassantCapture: {left 1, forward 1} rule Movement enPassant: move piece current-> location{ opponent piece any}
     },
     piece king: {
       move stepF: {forward 1},
@@ -67,6 +66,7 @@ game: {
   ],
   rules: {
       rule Movement captureOnMoveOver: move piece current-> other player piece any,
-      rule Movement promote: move piece current  -> location{x: any, y: oposite boardedge}
+      rule Movement captureKing: move piece current -> location{piece wK},
+      rule Movement promote:  move piece current  -> location{x: any, y: opposite boardedge},
   }
 }

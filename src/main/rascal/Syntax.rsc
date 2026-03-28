@@ -274,6 +274,6 @@ syntax RuleLocations
   ;
 syntax LexicalLocations
   = "boardedge"
-  | "oposite" "boardedge"
+  | "opposite" "boardedge"
   | "any"
   ;

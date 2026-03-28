@@ -415,24 +415,21 @@ str toRuleId(RuleID ID) {
 }
 
 
-list[str] toRuleLogic(Rule gameRuleTree) {
-  println(gameRuleTree);
+// list[str] toRuleLogic(Rule gameRuleTree) {
+//   list[str] logic = [];
+//   visit(gameRuleTree) {
+//     case RuleParts logicTree: println(toRuleLogic(logicTree));
+//     //case RuleParts logicTree: logic += [trim(unparse(logicTree))];
+//   }
+//   if (logic == []) {
+//     throw "Game rule must define logic";
+//   }
 
-  
-  list[str] logic = [];
-  visit(gameRuleTree) {
-    case RuleParts logicTree: println(toRuleLogic(logicTree));
-    //case RuleParts logicTree: logic += [trim(unparse(logicTree))];
-  }
-  if (logic == []) {
-    throw "Game rule must define logic";
-  }
-
-  // for (rule <- rules){
-  //   Rules::parseLogic(rule);
-  // }
-  return logic;
-}
+//   // for (rule <- rules){
+//   //   Rules::parseLogic(rule);
+//   // }
+//   return logic;
+// }
 private RuleLogic toRuleLogic((RuleParts) `(<RuleParts parts>)`)  = toRuleLogic(parts);
 private RuleLogic toRuleLogic((RuleParts) `! (<RuleParts parts>)`)  = R_not(toRuleLogic(parts));
 private RuleLogic toRuleLogic((RuleParts) `not (<RuleParts parts>)`)  = R_not(toRuleLogic(parts));
@@ -460,7 +457,7 @@ private RuleLogic toRuleLocation((RuleLocations) `{x: <Integer x>, y: <Integer y
 private RuleLogic toRuleLocation((RuleLocations) `{x: <LexicalLocations x>, y: <Integer y >}`) {
   RuleLogic xType = R_any();
   switch(x){
-    case (LexicalLocations) `oposite boardedge`: xType = R_boardEdge(true);
+    case (LexicalLocations) `opposite boardedge`: xType = R_boardEdge(true);
     case (LexicalLocations) `boardedge`: xType = R_boardEdge(false);
     case (LexicalLocations) `any`: xType = R_any();
   }
@@ -470,7 +467,7 @@ private RuleLogic toRuleLocation((RuleLocations) `{x: <LexicalLocations x>, y: <
 private RuleLogic toRuleLocation((RuleLocations) `{x: <Integer x>, y: <LexicalLocations y >}`){
   RuleLogic yType = R_any();
   switch(y){
-    case (LexicalLocations) `oposite boardedge`:yType = R_boardEdge(true);
+    case (LexicalLocations) `opposite boardedge`:yType = R_boardEdge(true);
     case (LexicalLocations) `boardedge`:        yType = R_boardEdge(false);
     case (LexicalLocations) `any`:              yType = R_any();
   }
@@ -481,12 +478,12 @@ private RuleLogic toRuleLocation((RuleLocations) `{x: <LexicalLocations x>, y: <
   RuleLogic xType = R_any();
   RuleLogic yType = R_any();
   switch(x){
-    case (LexicalLocations) `oposite boardedge`: xType = R_boardEdge(true);
+    case (LexicalLocations) `opposite boardedge`: xType = R_boardEdge(true);
     case (LexicalLocations) `boardedge`: xType = R_boardEdge(false);
     case (LexicalLocations) `any`: xType = R_any();
   }
   switch(y){
-    case (LexicalLocations) `oposite boardedge`: yType = R_boardEdge(true);
+    case (LexicalLocations) `opposite boardedge`: yType = R_boardEdge(true);
     case (LexicalLocations) `boardedge`: yType = R_boardEdge(false);
     case (LexicalLocations) `any`: yType = R_any();
   }
