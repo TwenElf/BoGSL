@@ -3,9 +3,12 @@ module Checks
 import List;
 import Map;
 import Model;
+import Syntax;
 import Model::Rule;
 import Model::Gameplay;
 import Set;
+import util::Maybe;
+import ParseTree;
 
 data SemanticError
   = DuplicatePiece(str pieceTypeId)
@@ -35,11 +38,21 @@ data SemanticError
   | UnknownPieceRulePiece(str pieceId, str ruleId)
   ;
 
-list[SemanticError] checkSemantics(GameDef game) {
-  list[SemanticError] errors = [];
+alias SemanticErrorAt = tuple[SemanticError, Maybe[loc]];
+
+private Maybe[loc] treeToLoc(Maybe[Tree] maybeTree) {
+  if (just(tree) := maybeTree) {
+    return just(tree.src);
+  } else {
+    return nothing();
+  }
+}
+
+list[SemanticErrorAt] checkSemantics(GameDef game) {
+  list[SemanticErrorAt] errors = [];
 
   switch (game) {
-    case gameDef(BoardDef board, list[PieceDef] pieces, list[PieceAssignmentDef] assignedPieces, list[ActionDef] actions, FlowDef flow, list[RuleDef] rules, list[str] players): {
+    case gameDef(BoardDef board, list[PieceDef] pieces, list[PieceAssignmentDef] assignedPieces, list[ActionDef] actions, FlowDef flow, list[RuleDef] rules, list[str] players, tree = gameTree): {
       set[str] pieceTypeIds = {};
       map[str, set[str]] movesByType = ();
       set[str] assignedPieceIds = {};
@@ -56,13 +69,13 @@ list[SemanticError] checkSemantics(GameDef game) {
       }
 
       if (size(players) == 0) {
-        errors += [MissingPlayers()];
+        errors += [<MissingPlayers(), treeToLoc(gameTree)>];
       }
 
       set[str] playerIds = {};
       for (playerId <- players) {
         if (playerId in playerIds) {
-          errors += [DuplicatePlayer(playerId)];
+          errors += [<DuplicatePlayer(playerId), treeToLoc(playerTree)>];
         } else {
           playerIds += {playerId};
         }
@@ -70,9 +83,9 @@ list[SemanticError] checkSemantics(GameDef game) {
 
       for (piece <- pieces) {
         switch (piece) {
-          case pieceDef(str pieceTypeId, list[MoveDef] moves): {
+          case pieceDef(str pieceTypeId, list[MoveDef] moves, tree = pieceTree): {
             if (pieceTypeId in pieceTypeIds) {
-              errors += [DuplicatePiece(pieceTypeId)];
+              errors += [<DuplicatePiece(pieceTypeId), treeToLoc(pieceTree)>];
             } else {
               pieceTypeIds += {pieceTypeId};
             }
@@ -80,9 +93,9 @@ list[SemanticError] checkSemantics(GameDef game) {
             set[str] moveIds = {};
             for (move <- moves) {
               switch (move) {
-                case moveDef(str moveId, _): {
+                case moveDef(str moveId, _, tree = moveTree): {
                   if (moveId in moveIds) {
-                    errors += [DuplicateMove(pieceTypeId, moveId)];
+                    errors += [<DuplicateMove(pieceTypeId, moveId), treeToLoc(moveTree)>];
                   } else {
                     moveIds += {moveId};
                   }
@@ -104,19 +117,19 @@ list[SemanticError] checkSemantics(GameDef game) {
 
       for (assignment <- assignedPieces) {
         switch (assignment) {
-          case pieceAssignmentDef(str playerId, str pieceId, str typeId, _, positionDef(int x, int y)): {
+          case pieceAssignmentDef(str playerId, str pieceId, str typeId, _, positionDef(int x, int y), tree = pieceAssignTree): {
             if (pieceId in assignedPieceIds) {
-              errors += [DuplicateAssignedPiece(pieceId)];
+              errors += [<DuplicateAssignedPiece(pieceId), treeToLoc(pieceAssignTree)>];
             } else {
               assignedPieceIds += {pieceId};
             }
 
             if (!(playerId in playerIds)) {
-              errors += [UnknownAssignedPiecePlayer(pieceId, playerId)];
+              errors += [<UnknownAssignedPiecePlayer(pieceId, playerId), treeToLoc(pieceAssignTree)>];
             }
 
             if (!(typeId in pieceTypeIds)) {
-              errors += [UnknownAssignedPieceType(pieceId, typeId)];
+              errors += [<UnknownAssignedPieceType(pieceId, typeId), treeToLoc(pieceAssignTree)>];
               movesByAssignedPiece[pieceId] = {};
             } else {
               movesByAssignedPiece[pieceId] = movesByType[typeId];
@@ -124,13 +137,13 @@ list[SemanticError] checkSemantics(GameDef game) {
 
             tuple[int, int] pos = <x, y>;
             if (pos in occupiedPositions) {
-              errors += [DuplicateAssignedPiecePosition(pieceId, x, y)];
+              errors += [<DuplicateAssignedPiecePosition(pieceId, x, y), treeToLoc(pieceAssignTree)>];
             } else {
               occupiedPositions += {pos};
             }
 
             if (x < 0 || x >= boardWidth || y < 0 || y >= boardHeight) {
-              errors += [AssignedPieceOutOfBounds(pieceId, x, y, boardWidth, boardHeight)];
+              errors += [<AssignedPieceOutOfBounds(pieceId, x, y, boardWidth, boardHeight), treeToLoc(pieceAssignTree)>];
             }
           }
         }
@@ -138,11 +151,11 @@ list[SemanticError] checkSemantics(GameDef game) {
 
       for (action <- actions) {
         switch (action) {
-          case actionDef(str pieceId, str moveId): {
+          case actionDef(str pieceId, str moveId, tree = actionTree): {
             if (!(pieceId in assignedPieceIds)) {
-              errors += [UnknownActionPiece(pieceId)];
+              errors += [<UnknownActionPiece(pieceId), treeToLoc(actionTree)>];
             } else if (!(moveId in movesByAssignedPiece[pieceId])) {
-              errors += [UnknownActionMove(pieceId, moveId)];
+              errors += [<UnknownActionMove(pieceId, moveId), treeToLoc(actionTree)>];
             }
           }
         }
@@ -156,44 +169,44 @@ list[SemanticError] checkSemantics(GameDef game) {
   return errors;
 }
 
-private list[SemanticError] checkFlowSemantics(FlowDef flow, set[str] playerIds) {
-  list[SemanticError] errors = [];
+private list[SemanticErrorAt] checkFlowSemantics(FlowDef flow, set[str] playerIds) {
+  list[SemanticErrorAt] errors = [];
 
   switch (flow) {
-    case flowDef(str startState, str endState, list[StateDef] states): {
+    case flowDef(str startState, str endState, list[StateDef] states, tree = flowTree): {
       set[str] stateIds = {};
       set[str] validStateActors = playerIds + {"gameOver"};
 
       for (state <- states) {
         switch (state) {
-          case stateDef(str stateId, _): {
+          case stateDef(str stateId, _, tree = stateTree): {
             if (stateId in stateIds) {
-              errors += [DuplicateFlowState(stateId)];
+              errors += [<DuplicateFlowState(stateId), treeToLoc(stateTree)>];
             } else {
               stateIds += {stateId};
             }
 
             if (!(stateId in validStateActors)) {
-              errors += [InvalidFlowStateActor(stateId)];
+              errors += [<InvalidFlowStateActor(stateId), treeToLoc(stateTree)>];
             }
           }
         }
       }
 
       if (!(startState in playerIds)) {
-        errors += [InvalidFlowStartPlayer(startState)];
+        errors += [<InvalidFlowStartPlayer(startState), treeToLoc(flowTree)>];
       }
 
       if (endState != "gameOver") {
-        errors += [InvalidFlowEndState(endState)];
+        errors += [<InvalidFlowEndState(endState), treeToLoc(flowTree)>];
       }
 
       if (!(startState in stateIds)) {
-        errors += [UnknownFlowStart(startState)];
+        errors += [<UnknownFlowStart(startState), treeToLoc(flowTree)>];
       }
 
       if (!(endState in stateIds)) {
-        errors += [UnknownFlowEnd(endState)];
+        errors += [<UnknownFlowEnd(endState), treeToLoc(flowTree)>];
       }
 
       for (state <- states) {
@@ -203,16 +216,16 @@ private list[SemanticError] checkFlowSemantics(FlowDef flow, set[str] playerIds)
             map[str, int] eventCounts = ();
             for (transition <- transitions) {
               switch (transition) {
-                case transitionDef(str event, str toState): {
+                case transitionDef(str event, str toState, tree = transTree): {
                   tuple[str, str] edge = <event, toState>;
                   if (edge in seenTransitions) {
-                    errors += [DuplicateFlowTransition(fromState, event, toState)];
+                    errors += [<DuplicateFlowTransition(fromState, event, toState), treeToLoc(transTree)>];
                   } else {
                     seenTransitions += {edge};
                   }
 
                   if (!(toState in stateIds)) {
-                    errors += [UnknownFlowTransitionTarget(fromState, toState)];
+                    errors += [<UnknownFlowTransitionTarget(fromState, toState), treeToLoc(transTree)>];
                   }
 
                   if (!(event in eventCounts)) {
@@ -225,16 +238,16 @@ private list[SemanticError] checkFlowSemantics(FlowDef flow, set[str] playerIds)
 
             if (fromState != "gameOver") {
               if (!("moved" in eventCounts)) {
-                errors += [MissingFlowEventTransition(fromState, "moved")];
+                errors += [<MissingFlowEventTransition(fromState, "moved"), treeToLoc(tree)>];
               }
               if (!("noMoves" in eventCounts)) {
-                errors += [MissingFlowEventTransition(fromState, "noMoves")];
+                errors += [<MissingFlowEventTransition(fromState, "noMoves"), treeToLoc(tree)>];
               }
             }
 
             for (event <- eventCounts) {
               if (eventCounts[event] > 1) {
-                errors += [AmbiguousFlowEventTransition(fromState, event)];
+                errors += [<AmbiguousFlowEventTransition(fromState, event), treeToLoc(tree)>];
               }
             }
           }
@@ -271,7 +284,7 @@ private list[SemanticError] checkFlowSemantics(FlowDef flow, set[str] playerIds)
       }
 
       if (!(endState in reachable)) {
-        errors += [UnreachableFlowEnd(startState, endState)];
+        errors += [<UnreachableFlowEnd(startState, endState), treeToLoc(flowTree)>];
       }
     }
   }
@@ -306,14 +319,14 @@ private list[SemanticError] checkRuleSemantics(list[RuleDef] rules, set[str] pie
         else gameRuleIds += {ruleId};
       }
 
-      case pieceRuleDef(str pieceId, str ruleId): {
+      case pieceRuleDef(str pieceId, str ruleId, pieceRuleTree = tree): {
         if (!(pieceId in pieceTypeIds)) {
-          errors += [UnknownPieceRulePiece(pieceId, ruleId)];
+          errors += [<UnknownPieceRulePiece(pieceId, ruleId), treeToLoc(tree)>];
         }
 
         tuple[str, str] key = <pieceId, ruleId>;
         if (key in pieceRuleIds) {
-          errors += [DuplicatePieceRule(pieceId, ruleId)];
+          errors += [<DuplicatePieceRule(pieceId, ruleId), treeToLoc(tree)>];
         } else {
           pieceRuleIds += {key};
         }

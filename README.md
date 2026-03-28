@@ -4,6 +4,7 @@ A grid-based board game specific language (DSL), created for the Software Langua
 ## Project layout
 - `pom.xml`
 - `META-INF/RASCAL.MF`
+- `bogsl.sh` (CLI script to run any `.dsl` file)
 - `AST_PIPELINE.md` (AST architecture and module responsibilities)
 - `CONSTRAINTS.md` (all current parser/conversion/semantic constraints)
 - `FLOW.md` (flow state machine design notes)
@@ -12,8 +13,13 @@ A grid-based board game specific language (DSL), created for the Software Langua
 - `src/main/rascal/Model.rsc` (AST data types)
 - `src/main/rascal/ToModel.rsc` (parse tree -> AST conversion)
 - `src/main/rascal/Checks.rsc` (semantic validations on AST)
+- `src/main/rascal/Gameplay.rsc` (game logic, move simulation, flow execution)
+- `src/main/rascal/UI.rsc` (Salix web UI: board grid, action buttons, flow chart)
+- `src/main/rascal/Display.rsc` (ASCII board display utility)
+- `src/main/rascal/BoGSL.rsc` (entry point: `playBoGSL`, `playChess`, `playLine`, `main`)
 - `example/basic.dsl`
 - `example/chess.dsl` (chess-like demo)
+- `example/line.dsl` (minimal single-player example)
 
 ## Build
 Run from repository root:
@@ -22,21 +28,57 @@ Run from repository root:
 mvn package
 ```
 
-## Running examples
-In a Rascal REPL:
+## Running a game
 
+### CLI (primary)
+```sh
+./bogsl.sh example/chess.dsl
+./bogsl.sh --port 8080 example/line.dsl
+```
+
+Opens a browser UI at `http://localhost:5555` (or the port specified with `--port`).
+The script builds the Maven dependency classpath on first run (cached in `target/.classpath`).
+
+### REPL / IDE
+From a Rascal REPL (e.g. the VSCode extension):
+
+```rascal
+import BoGSL;
+playChess();
+playLine();
+playBoGSL(|cwd:///example/basic.dsl|);
+```
+
+Each call returns a `UIApp` that the Rascal IDE renders as an interactive web view.
+
+### Parse-tree inspection only
 ```rascal
 import Parser;
 parseGameFile(|cwd:///example/chess.dsl|);
 ```
 
-`example/basic.dsl` and `example/chess.dsl` are valid end-to-end examples.
+`example/basic.dsl`, `example/chess.dsl`, and `example/line.dsl` are valid end-to-end examples.
 `example/chess.dsl` is a chess-like demo (white/black turn loop, one game rule, one piece rule: `enPassant` on `pawn`, and explicit per-player piece placement).
+`example/line.dsl` is the minimal example: a single piece moving forward along a 1×5 board until it falls off.
 
 `parseGameFile` and `parseGame` both:
 - trim input before parsing
 - parse with start symbol `Game`
 - enforce one `board`, one `chest`, one `players`, and one `flow`, with optional `actions` via `checkGame`
+
+## UI
+
+BoGSL includes a browser-based interactive UI built with [Salix](https://github.com/usethesource/salix).
+
+The UI shows:
+- **Board grid** – pieces are rendered in their current cells; cells and piece labels are highlighted on hover when a move targets that cell.
+- **Action list** – buttons for every move currently available to the active player. Clicking a button executes that move (`doAction`) and advances the flow state (`advanceFlow("moved")`).
+- **Continue button** – shown when no moves are available for the current player. Clicking it advances the flow state via `advanceFlow("noMoves")`.
+- **Flow chart** – a live Mermaid diagram of the flow state machine, with the current state highlighted and the relevant outgoing transition highlighted on hover.
+
+Key functions in `UI.rsc`:
+- `startUI(game, state) → UIApp` – builds the Salix app (for IDE / REPL use).
+- `serveUI(game, state, host)` – starts a standalone HTTP server (used by `bogsl.sh`).
 
 ## AST and semantic checks
 BoGSL uses an AST layer to separate parsing from game semantics.

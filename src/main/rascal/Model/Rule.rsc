@@ -1,4 +1,6 @@
 module Model::Rule
+import util::Maybe;
+import Syntax;
 
 data RuleDef
   = gameRuleDef(str ruleId, RuleLogic logic)

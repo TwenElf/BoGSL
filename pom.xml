@@ -3,8 +3,8 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.rascalmpl</groupId>
-  <artifactId>rascal</artifactId>
+  <groupId>nl.vu.software-language-engineering.bogsl</groupId>
+  <artifactId>BoGSL</artifactId>
   <version>0.1.0-SNAPSHOT</version>
 
   <properties>
@@ -31,9 +31,41 @@
       <artifactId>rascal</artifactId>
       <version>0.40.17</version>
     </dependency>
+
+     <dependency>
+        <groupId>org.rascalmpl</groupId>
+        <artifactId>rascal-lsp</artifactId>
+        <version>2.22.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rascalmpl</groupId>
+      <artifactId>salix-core</artifactId>
+      <version>0.2.9</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.rascalmpl</groupId>
+        <artifactId>salix-contrib</artifactId>
+        <version>0.2.9</version>
+    </dependency>
   </dependencies>
 
   <build>
+    <resources>
+        <resource>
+        <directory>.</directory>
+        <filtering>false</filtering>
+        <includes>
+          <include>META-INF/RASCAL.MF</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>src/main/rascal</directory>
+        <filtering>false</filtering>
+      </resource>
+    </resources>
+
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

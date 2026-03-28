@@ -1,12 +1,12 @@
 module Gameplay
 
-import Model;
-import Model::Gameplay;
-import Model::Rule;
+import Display;
 import IO;
 import List;
+import Model::Gameplay;
+import Model::Rule;
+import Model;
 import Rules;
-import Display;
 
 
 // Create a new `PieceState` from a piece assignment and type definition.
@@ -71,7 +71,7 @@ list[AvailableMove] availableMoves(GameDef game, GameplayState state, str player
     PieceState piece = state.pieces[pieceId];
     for (moveId <- piece.moves) {
       PieceState after = simulateMove(piece, moveId);
-      if (isInsideBoard(game.board, after.x, after.y));{
+      if (isInsideBoard(game.board, after.x, after.y)){
         switch (piece.moves[moveId]){
           case moveDef(str _, list[Step] _, RuleDef rule): {
             if (!checkSingleRule(game, state, rule ,actionDef(pieceId, moveId))) continue;}// if the rule evaluates false it should not show up.
@@ -137,7 +137,7 @@ private StateDef findFlowState(FlowDef flow, str stateId) {
   throw "Unknown flow state at runtime: <stateId>";
 }
 
-private str advanceFlow(FlowDef flow, str currentState, str event) {
+str advanceFlow(FlowDef flow, str currentState, str event) {
   StateDef state = findFlowState(flow, currentState);
   list[TransitionDef] matching = [t | t <- state.transitions, t.event == event];
 

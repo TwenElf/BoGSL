@@ -1,0 +1,64 @@
+{
+  "name": "bogsl-vscode-extension",
+  "displayName": "BoGSL VSCode extension",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.67.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:bogsl"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "bogsl",
+        "aliases": [
+          "BoGSL"
+        ],
+        "extensions": [
+          ".dsl"
+        ],
+        "configuration": "./assets/bogsl-language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "bogsl",
+        "scopeName": "source.bogsl",
+        "path": "./assets/bogsl.tmGrammar.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "prepackage": "npm run jar:download-check && cd .. && mvn package && cp target/BoGSL*.jar vscode-extension/assets/jars/bogsl-lsp.jar ",
+    "compile": "npx webpack",
+    "watch": "npx webpack --watch",
+    "package": "npx webpack --mode production --devtool hidden-source-map",
+    "lint": "npx eslint src --ext ts",
+    "jar:download": "mkdir -p tmp && curl -L https://github.com/usethesource/rascal-language-servers/releases/download/v0.13.3/rascalmpl-0.13.3.vsix -o tmp/rascal.zip",
+    "jar:unzip": "unzip -o tmp/rascal.zip -d tmp",
+    "jar:download-check": "test -d tmp || (npm run jar:download && npm run jar:unzip)"
+  },
+  "devDependencies": {
+    "@types/node": "16.x",
+    "@types/vscode": "^1.67.0",
+    "@typescript-eslint/eslint-plugin": "^5.42.0",
+    "@typescript-eslint/parser": "^5.42.0",
+    "copy-webpack-plugin": "^11.0.0",
+    "eslint": "^8.26.0",
+    "ts-loader": "^9.4.1",
+    "typescript": "^4.8.4",
+    "vsce": "^2.8.0",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0"
+  },
+  "dependencies": {
+    "@usethesource/rascal-vscode-dsl-lsp-server": "0.13.3"
+  }
+}

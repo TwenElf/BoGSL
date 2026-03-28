@@ -44,7 +44,7 @@ syntax GameProperty
   ;
 
 syntax Players
-  = "[" { PlayerDefinition "," }* PlayerDefinition? "]"
+  = "[" { PlayerDefinition "," }* "]"
   ;
 
 syntax PlayerDefinition
@@ -65,7 +65,7 @@ syntax PlayerName
 
 
 syntax PieceAssignments
-  = "{" { PieceAssignment "," }* PieceAssignment? "}"
+  = "{" { PieceAssignment "," }* "}"
   ;
 
 syntax PieceAssignment
@@ -109,11 +109,11 @@ syntax AssignedPieceType
 
 // ---------- Pieces syntax ----------
 syntax Chest // chest as in pieces chest
-  = "[" {Piece ","}* Piece? "]"
+  = "[" {Piece ","}* "]"
   ;
 
 syntax Piece
-  = "piece" ID ":" "{" { PieceProperty "," }* PieceProperty? "}"
+  = "piece" ID ":" "{" { PieceProperty "," }* "}"
   ;
 
 syntax PieceProperty
@@ -145,7 +145,7 @@ syntax FacingDirection
 
 // ---------- Game syntax ----------
 syntax Actions
-  = "["  { Action ","}* Action? "]"
+  = "["  { Action ","}* "]"
   ;
 
 syntax Action
@@ -171,7 +171,7 @@ syntax EndState
   ;
 
 syntax Machine
-  = "[" { FlowState "," }* FlowState? "]"
+  = "[" { FlowState "," }* "]"
   ;
 
 syntax FlowState
