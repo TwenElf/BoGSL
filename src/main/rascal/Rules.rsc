@@ -62,6 +62,21 @@ private bool checkGameRule(GameDef game, RuleLogic rule) {
   return true;
 }
 
+private bool checkGameRule(GameDef game,  GameplayState state , ActionDef action, R_eq( left,  right)){
+  switch([left, right]){
+    case[R_location(RuleLogic _, bool _), R_location(RuleLogic _, bool _)]: {
+      eval_left = ruleEvalLocation(  game,  state,  action,  left);
+      eval_right = ruleEvalLocation(  game,  state,  action,  right);
+      switch([eval_left, eval_right]){
+        case [R_location(int x_l, int y_l, R_int(), R_int()), R_location(int x_r, int y_r, R_int(), R_int())]: return x_l==x_r&&y_l ==y_r;
+        default: throw "checkGameRule: unable to compare <left> and <right>";
+      }
+    }
+    default: throw "checkGameRule: unable to compare <left> and <right>";
+  }
+  return false;
+}
+
 private bool checkGameRule(GameDef game,  GameplayState state , ActionDef action, R_or(RuleLogic left, RuleLogic right)){
   return (checkGameRule(game,   state ,  action, left) || checkGameRule(game,   state ,  action, right));
 }
@@ -80,7 +95,7 @@ private bool checkGameRule(GameDef game,  GameplayState state , ActionDef action
   <moveToX, MoveToY> = calcMovement(game,state,action, left);
   switch(right){
     case R_location(_,_,_,_):right = ruleEvalLocation( game,  state,  action,  right);
-    case R_location(_):right = ruleEvalLocation( game,  state,  action,  right);
+    case R_location(_,_):right = ruleEvalLocation( game,  state,  action,  right);
   }
   
   switch(right){
@@ -92,7 +107,6 @@ private bool checkGameRule(GameDef game,  GameplayState state , ActionDef action
     }
     default: return compareLocations( moveToX,  MoveToY,  right);
   }
-  return false;
 }
 
 private bool compareLocations(int moveToX, int MoveToY, RuleLogic right){
@@ -132,8 +146,8 @@ private RuleLogic ruleEvalLocation(  GameDef game,  GameplayState state,  Action
         case R_boardEdge(false): {y = dir:=northFacing()?  game.board.height:0; yType = R_int();}
       }
       return R_location( x, y, xType, yType);}
-    // determine the location(s) listed
-    case R_location( (RuleLogic) logic):{
+    // determine the current location(s) listed 
+    case R_location( (RuleLogic) logic, false):{
       switch(logic){
         case R_pieceRef(id): if (id in state.pieces){
           return R_location(state.pieces[id].x,state.pieces[id].y,R_int(),R_int());
@@ -156,13 +170,58 @@ private RuleLogic ruleEvalLocation(  GameDef game,  GameplayState state,  Action
             {locations = locations + R_location(state.pieces[pieceId].x,state.pieces[pieceId].y,R_int(),R_int());}
           }
           return R_location(locations);
-        } 
+        }
+        case  R_currentPiece():{
+            PieceState piece = state.pieces[action.pieceId];
+            return R_location(piece.x, piece.y, R_int(), R_int());
+        }
 
       }
-      return R_false;
+      
+      throw "unexpected R_location <logic>";
+    }
+      // get the initial location for pieces.
+      case R_location( (RuleLogic) logic, true):{
+        map[str, tuple[int x, int y]] InitialByPiece = (assignment.pieceId: <assignment.initialPosition.x, assignment.initialPosition.y> | PieceAssignmentDef assignment <- game.assignedPieces);
+        int x;
+        int y;
+            switch(logic){
+        case R_pieceRef(id): if (id in state.pieces){
+          <x, y> = InitialByPiece[id];
+          return R_location(x,y,R_int(),R_int());
+          }
+        // get all pieces.
+        case R_anyPiece(): {
+          list[RuleLogic] locations = []; 
+          for (pieceid <- state.pieces){
+            <x, y> = InitialByPiece[pieceid];
+            locations = locations + R_location(x,y,R_int(),R_int());
+          }
+          return R_location(locations);
+        }
+        // get all the pieces of the opponent
+        case R_oppponent(R_anyPiece()): {
+          map[str, str] ownerByPiece = (assignment.pieceId: assignment.playerId | PieceAssignmentDef assignment <- game.assignedPieces);
+          str playerId = ownerByPiece[action.pieceId];
+          list[RuleLogic] locations = []; 
+          for (pieceId <- state.pieces){
+            if((pieceId in ownerByPiece) && ownerByPiece[pieceId] != playerId)
+            <x, y> = InitialByPiece[pieceid];
+            {locations = locations + R_location(x,y,R_int(),R_int());}
+          }
+          return R_location(locations);
+        }
+        case  R_currentPiece():{
+            <x, y> = InitialByPiece[action.pieceId];
+            return R_location(x, y, R_int(), R_int());
+        }
+
+      }
+      
+      throw "unexpected R_location <logic>";
     }
     default:
-      throw "expected R_location";
+      throw "expected R_location <logic>";
   }
 }
 

@@ -17,7 +17,7 @@ keyword KW
   ;
 
 lexical ID
-  = [A-Za-z_][A-Za-z0-9_]* !>> [A-Za-z0-9_] \ KW
+  = [A-Za-z_][A-Za-z0-9_]* !>> [A-Za-z0-9_] \ KW 
   ;
 
 lexical MoveID
@@ -269,8 +269,14 @@ syntax GameOverState
 syntax RuleLocations
   = "{" "x" ":" (Integer| LexicalLocations) "," "y" ":" (Integer| LexicalLocations) "}"
   | "{" "piece" "any" "}"
+  | "{" "piece" "current" InitialOpt "}"
   | "{" "opponent" "piece" "any" "}"
-  > "{" "piece" ID "}"
+  | "{" "piece" "id:" ID InitialOpt "}"
+  ;
+
+syntax InitialOpt
+  = "initial"
+  | /* empty */
   ;
 syntax LexicalLocations
   = "boardedge"

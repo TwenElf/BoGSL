@@ -40,7 +40,7 @@ data RuleLogic
 
   // location
   | R_location(int x, int y, RuleLogic xType, RuleLogic yType)
-  | R_location(RuleLogic piece)
+  | R_location(RuleLogic piece, bool initial)
   | R_location(list[RuleLogic] locations)
   | R_any()
   | R_boardEdge(bool opposite) // the boolean stores is true if the opposite board edge is selected

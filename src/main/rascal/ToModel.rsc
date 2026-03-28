@@ -452,9 +452,12 @@ private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> != <RuleParts r>`)  =  
 private RuleLogic toRuleLogic((RuleParts) `capture <ID id>`)  =  R_capture(R_pieceRef(trim(unparse(id))));
 //private RuleLogic toRuleLogic((RuleParts) `capture any`)  =  R_capture(R_anyPiece);
 
-private RuleLogic toRuleLocation((RuleLocations) `{opponent piece any}`) =  R_location(R_oppponent(R_anyPiece()));
-private RuleLogic toRuleLocation((RuleLocations) `{piece any}`) =  R_location(R_anyPiece());
-private RuleLogic toRuleLocation((RuleLocations) `{piece <ID id>}`) =  R_location(R_pieceRef(unparse(id)));
+private RuleLogic toRuleLocation((RuleLocations) `{opponent piece any}`) =  R_location(R_oppponent(R_anyPiece()), false);
+private RuleLogic toRuleLocation((RuleLocations) `{piece current initial}`) =  R_location(R_currentPiece(), true);
+private RuleLogic toRuleLocation((RuleLocations) `{piece current}`) =  R_location(R_currentPiece(), false);
+private RuleLogic toRuleLocation((RuleLocations) `{opponent piece any}`) =  R_location(R_oppponent(R_anyPiece()), false);
+private RuleLogic toRuleLocation((RuleLocations) `{piece any}`) =  R_location(R_anyPiece(), false);
+private RuleLogic toRuleLocation((RuleLocations) `{piece id:<ID id>}`) =  R_location(R_pieceRef(unparse(id)), false);
 private RuleLogic toRuleLocation((RuleLocations) `{x: <Integer x>, y: <Integer y >}`) = R_location(toInt(unparse(x)), toInt(unparse(y)), R_int(), R_int());
 // Store a location that needs to be determined in game
 private RuleLogic toRuleLocation((RuleLocations) `{x: <LexicalLocations x>, y: <Integer y >}`) {
