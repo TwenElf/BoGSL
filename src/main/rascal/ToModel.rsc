@@ -8,8 +8,6 @@ import String;
 import Syntax;
 import Rules;
 
-import IO; // TODO: Remove later
-
 GameDef toModel(Game gameTree) {
   Board boardTree = firstBoard(gameTree);
   Chest chestTree = firstChest(gameTree);
@@ -436,8 +434,8 @@ list[str] toRuleLogic(Rule gameRuleTree) {
   return logic;
 }
 private RuleLogic toRuleLogic((RuleParts) `(<RuleParts parts>)`)  = toRuleLogic(parts);
-private RuleLogic toRuleLogic((RuleParts) `! (<RuleParts parts>)`)  = toRuleLogic(parts);
-private RuleLogic toRuleLogic((RuleParts) `not (<RuleParts parts>)`)  = toRuleLogic(parts);
+private RuleLogic toRuleLogic((RuleParts) `! (<RuleParts parts>)`)  = R_not(toRuleLogic(parts));
+private RuleLogic toRuleLogic((RuleParts) `not (<RuleParts parts>)`)  = R_not(toRuleLogic(parts));
 private RuleLogic toRuleLogic((RuleParts) `move piece current`)  =  R_movement(R_currentPiece());
 private RuleLogic toRuleLogic((RuleParts) `move piece any`)      =  R_movement(R_anyPiece());
 private RuleLogic toRuleLogic((RuleParts) `other player piece any`)      =  R_movement(R_anyPiece()); // TODO: Fix to get otherplayer
@@ -447,13 +445,16 @@ private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> and <RuleParts r>`) =  
 private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> && <RuleParts r>`)  =  R_and(toRuleLogic(l), toRuleLogic(r));
 private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> || <RuleParts r>`)  =  R_or(toRuleLogic(l), toRuleLogic(r));
 private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> == <RuleParts r>`)  =  R_eq(toRuleLogic(l), toRuleLogic(r));
-//private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> != <RuleParts r>`)  =  R_neq(toRuleLogic(l), toRuleLogic(r)); // TODO: figure out what is causing the warnings
+private RuleLogic toRuleLogic((RuleParts) `<RuleParts l> != <RuleParts r>`)  =  R_neq(toRuleLogic(l), toRuleLogic(r)); // TODO: figure out what is causing the warnings
 //private RuleLogic toRuleLogic((RuleParts) `piece any`)  =  R_anyPiece();
 //private RuleLogic toRuleLogic((RuleParts) `piece <ID id>`)  =  R_pieceRef(trim(unparse(id)));
 //private RuleLogic toRuleLogic((RuleParts) `capture any`)  =  R_capture(R_anyPiece());
 private RuleLogic toRuleLogic((RuleParts) `capture <ID id>`)  =  R_capture(R_pieceRef(trim(unparse(id))));
 //private RuleLogic toRuleLogic((RuleParts) `capture any`)  =  R_capture(R_anyPiece);
 
+private RuleLogic toRuleLocation((RuleLocations) `{opponent piece any}`) =  R_location(R_oppponent(R_anyPiece()));
+private RuleLogic toRuleLocation((RuleLocations) `{piece any}`) =  R_location(R_anyPiece());
+private RuleLogic toRuleLocation((RuleLocations) `{piece <ID id>}`) =  R_location(R_pieceRef(unparse(id)));
 private RuleLogic toRuleLocation((RuleLocations) `{x: <Integer x>, y: <Integer y >}`) = R_location(toInt(unparse(x)), toInt(unparse(y)), R_int(), R_int());
 // Store a location that needs to be determined in game
 private RuleLogic toRuleLocation((RuleLocations) `{x: <LexicalLocations x>, y: <Integer y >}`) {

@@ -87,6 +87,13 @@ list[SemanticError] checkSemantics(GameDef game) {
                     moveIds += {moveId};
                   }
                 }
+                case moveDef(str moveId, _, _): {
+                  if (moveId in moveIds) {
+                    errors += [DuplicateMove(pieceTypeId, moveId)];
+                  } else {
+                    moveIds += {moveId};
+                  }
+                }
               }
             }
 

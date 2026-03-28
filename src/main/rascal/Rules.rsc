@@ -48,6 +48,16 @@ public bool checkRules(GameDef game, GameplayState state, ActionDef action) {
   return true;
 }
 
+public bool checkSingleRule(GameDef game, GameplayState state, RuleDef rule ,ActionDef action) {
+  println("testing single rule: <rule>");
+  bool result = false;
+  switch (rule) {
+      case moveRuleDef(str ruleId, RuleLogic logic): result =  (checkGameRule(game,state,action, logic));
+  }
+
+  return result;
+}
+
 // public bool checkRule(GameDef game, RuleDef rule) {
 //   switch (rule) {
 //     case gameRuleDef(str ruleId, list[str] logic): return checkGameRule(game, logic);
@@ -102,7 +112,7 @@ private bool checkGameRule(GameDef game,  GameplayState state , ActionDef action
 // returns the location the piece will end up in
 private tuple[int x, int y] calcMovement(GameDef game, GameplayState state, ActionDef action, R_currentPiece() ){
   PieceState piece = state.pieces[action.pieceId];
-  list[Step] steps = piece.moves[action.moveId];
+  list[Step] steps = piece.moves[action.moveId].steps;
   for (Step step <- steps) {
     piece = doMove(piece, step);
   }
@@ -127,6 +137,16 @@ private RuleLogic ruleEvalLocation(  GameDef game,  GameplayState state,  Action
       }
       //println("EvalLocation: x:<x>, y:<y> <xType> <yType>");
       return R_location( x, y, xType, yType);}
+    case R_location( (RuleLogic) logic):{
+      switch(logic){
+        case R_pieceRef(id): if (id in state.pieces){
+          return R_location(state.pieces[id].x,state.pieces[id].y,R_int(),R_int());
+          }
+
+      }
+      return R_false;
+      // TODO: Implement the switches for opponent pieces
+    }
     default:
       throw "expected R_location";
   }

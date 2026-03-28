@@ -118,7 +118,6 @@ syntax Piece
 
 syntax PieceProperty
   = "move" Movement
-  | "move" Movement Rule
   ;
 
 syntax PieceRuleProperty
@@ -127,6 +126,7 @@ syntax PieceRuleProperty
 
 syntax Movement
   = MoveID  ":" "{" Direction? ("," Direction)* "}"
+  > MoveID  ":" "{" Direction? ("," Direction)* "}" Rule
   ;
 
 syntax Direction
@@ -268,6 +268,9 @@ syntax GameOverState
 
 syntax RuleLocations
   = "{" "x" ":" (Integer| LexicalLocations) "," "y" ":" (Integer| LexicalLocations) "}"
+  | "{" "piece" "any" "}"
+  | "{" "opponent" "piece" "any" "}"
+  > "{" "piece" ID "}"
   ;
 syntax LexicalLocations
   = "boardedge"

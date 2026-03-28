@@ -2,6 +2,7 @@ module Gameplay
 
 import Model;
 import Model::Gameplay;
+import Model::Rule;
 import IO;
 import List;
 import Rules;
@@ -10,8 +11,8 @@ import Display;
 
 // Create a new `PieceState` from a piece assignment and type definition.
 PieceState newPieceState(PieceAssignmentDef assignment, PieceDef pieceType) {
-  map[str, list[Step]] moves
-    = (move.name: move.steps | MoveDef move <- pieceType.moves);
+  map[str, MoveDef] moves
+    = (move.name: move | MoveDef move <- pieceType.moves);
 
   switch (assignment) {
     case pieceAssignmentDef(_, _, _, Facing direction, positionDef(int x, int y)):
@@ -46,7 +47,7 @@ GameplayState newGameplayState(GameDef game) {
 // Do one `ActionDef` and return the new `GameplayState`
 GameplayState doAction(GameplayState state, GameDef game, ActionDef action) {
   PieceState piece = state.pieces[action.pieceId];
-  list[Step] steps = piece.moves[action.moveId];
+  list[Step] steps = piece.moves[action.moveId].steps;
   for (Step step <- steps) {
     piece = doMove(piece, step);
   }
@@ -70,13 +71,31 @@ list[AvailableMove] availableMoves(GameDef game, GameplayState state, str player
     PieceState piece = state.pieces[pieceId];
     for (moveId <- piece.moves) {
       PieceState after = simulateMove(piece, moveId);
-      if (isInsideBoard(game.board, after.x, after.y)) {
+      if (isInsideBoard(game.board, after.x, after.y));{
+        switch (piece.moves[moveId]){
+          case moveDef(str _, list[Step] _, RuleDef rule): {
+            println("Checking for moveDef rule <rule>");
+            if (!checkSingleRule(game, state, rule ,actionDef(pieceId, moveId))) continue;}// if the rule evaluates false it should not show up.
+        }
+ 
         moves += [availableMove(playerId, pieceId, moveId, after.x, after.y)];
       }
     }
   }
 
   return moves;
+}
+
+list[PieceAssignmentDef] getPlayerPieces(GameDef game, GameplayState state, str playerId) {
+  map[str, str] ownerByPiece = (assignment.pieceId: assignment.playerId | PieceAssignmentDef assignment <- game.assignedPieces);
+  list[PieceAssignmentDef] pieces = [];
+  for (pieceId <- state.pieces) {
+    if (!(pieceId in ownerByPiece) || ownerByPiece[pieceId] != playerId) {
+      continue;
+    }
+    pieces = pieces + [pieceId];
+  }
+  return pieces;
 }
 
 private bool isPlayerState(GameDef game, str flowState) {
@@ -100,7 +119,7 @@ list[AvailableMove] currentPlayerAvailableMoves(GameDef game, GameplayState stat
 
 private PieceState simulateMove(PieceState piece, str moveId) {
   PieceState result = piece;
-  for (step <- piece.moves[moveId]) {
+  for (step <- piece.moves[moveId].steps) {
     result = doMove(result, step);
   }
   return result;

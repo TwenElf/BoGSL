@@ -1,4 +1,5 @@
 module Model::Gameplay
+import Model::Rule;
 
 data Facing
   = northFacing()
@@ -15,7 +16,8 @@ data Step
   ;
 
 data MoveDef
-  = moveDef(str name, list[Step] steps)
+  = moveDef(str name, list[Step] steps, RuleDef rule) // add the possibility for a movement to contain a rule.
+  | moveDef(str name, list[Step] steps)
   ;
 
 data PieceDef
@@ -31,7 +33,7 @@ data PieceAssignmentDef
   ;
 
 data PieceState
-  = pieceState(int x, int y, Facing facing, map[str, list[Step]] moves)
+  = pieceState(int x, int y, Facing facing, map[str, MoveDef] moves)
   ;
 
 data GameplayState

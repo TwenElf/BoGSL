@@ -18,6 +18,9 @@ data RuleLogic
   | R_or(RuleLogic left, RuleLogic right)
   | R_eq(RuleLogic left, RuleLogic right)
   | R_neq(RuleLogic left, RuleLogic right)
+  | R_not(RuleLogic logic)
+  | R_false()
+  | R_true()
 
   // action / movement
   | R_movement(RuleLogic logic)
@@ -27,6 +30,7 @@ data RuleLogic
   | R_currentPiece()
   | R_anyPiece()
   | R_pieceRef(str pieceTypeId)
+  | R_oppponent(RuleLogic piece)
 
   // player-relative selectors
   | R_playerCurrent(RuleLogic entity)
@@ -34,6 +38,7 @@ data RuleLogic
 
   // location
   | R_location(int x, int y, RuleLogic xType, RuleLogic yType)
+  | R_location(RuleLogic piece)
   | R_any()
   | R_boardEdge(bool oposite) // the boolean stores is true if the oposite board edge is selected
   | R_int()
