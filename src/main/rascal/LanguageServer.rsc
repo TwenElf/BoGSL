@@ -43,7 +43,7 @@ private rel[loc, loc] pieceDefinitions(start[Game] g) {
 
 // Return a relation between chest piece uses and their definition.
 private rel[loc, loc] chestPieceDefinitions(start[Game] g) {
-  rel[str, loc] defs = {<"<id>", id.src> | /(Piece)`piece <ID id> : { <{PieceProperty ","}* _> <PieceProperty? _> }` := g};
+  rel[str, loc] defs = {<"<id>", id.src> | /(Piece)`piece <ID id> : { <{PieceProperty ","}* _> }` := g};
   rel[loc, str] uses = {<id.src, "<id>"> | /AssignedPieceType pieceType := g, /ID id := pieceType};
   return (uses + defs<1,0>) o defs;
 }
