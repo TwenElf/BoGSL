@@ -35,21 +35,19 @@ public bool checkRules(GameDef game, GameplayState state, ActionDef action) {
         case moveRuleDef(str ruleId, RuleLogic logic): results = results +  (  ruleId:  checkGameRule(game,state,action, logic));
     }
   }
-  println(results);
-  for( res <- results){
-    if(results[res] == true){
-      println( "<res> is true for action <action>");
-    }
-    else{
-       println( "<res> is false for action <action>");
-    }
-  }
+  // for( res <- results){
+  //   if(results[res] == true){
+  //     println( "<res> is true for action <action>");
+  //   }
+  //   else{
+  //      println( "<res> is false for action <action>");
+  //   }
+  // }
   
   return true;
 }
 
 public bool checkSingleRule(GameDef game, GameplayState state, RuleDef rule ,ActionDef action) {
-  println("testing single rule: <rule>");
   bool result = false;
   switch (rule) {
       case moveRuleDef(str ruleId, RuleLogic logic): result =  (checkGameRule(game,state,action, logic));
@@ -58,19 +56,7 @@ public bool checkSingleRule(GameDef game, GameplayState state, RuleDef rule ,Act
   return result;
 }
 
-// public bool checkRule(GameDef game, RuleDef rule) {
-//   switch (rule) {
-//     case gameRuleDef(str ruleId, list[str] logic): return checkGameRule(game, logic);
-//     //case pieceRuleDef(str pieceId, str ruleId): return checkPieceRule(game, pieceId, ruleId);
-//   }
-//   return true;
-// }
 
-private bool checkGameRule(GameDef game, list[str] rules) {
-  // Placeholder for actual game rule logic checking
-  //println(rules);
-  return true;
-}
 
 private bool checkGameRule(GameDef game, RuleLogic rule) {
   return true;
@@ -89,14 +75,12 @@ private bool checkGameRule(GameDef game,  GameplayState state , ActionDef action
 
 // Check the game rule for a movement going to a location
 private bool checkGameRule(GameDef game,  GameplayState state , ActionDef action, R_to(R_movement(left), RuleLogic right)){
-  //println("Moving <left> to <right>");
   int moveToX = 0;
   int MoveToY = 0;
   <moveToX, MoveToY> = calcMovement(game,state,action, left);
   switch(right){
     case R_location(_,_,_,_):right = ruleEvalLocation( game,  state,  action,  right);
   }
-  //if(right:=R_location())  evalLocation(game,state,action,right);
   switch(right){
     case R_location(int x, int y, R_int(), R_int()): return (moveToX == x && MoveToY == y); // check location directly
     case R_location(int x, int _, R_int(), R_any()): return (moveToX == x); // One of the locations is any possible location
@@ -123,8 +107,7 @@ private tuple[int x, int y] calcMovement(GameDef game, GameplayState state, Acti
 // if BoardEdge is used it updates the edge based on orientation of the piece.
 private RuleLogic ruleEvalLocation(  GameDef game,  GameplayState state,  ActionDef action,  RuleLogic logic) {
   Facing dir = state.pieces[action.pieceId].facing;
-  //println(logic);
-  //println("<action.pieceId> <state.pieces[action.pieceId]>");
+
   switch (logic) {
     case R_location(x, y, xType, yType):{
       switch(xType){
@@ -135,7 +118,6 @@ private RuleLogic ruleEvalLocation(  GameDef game,  GameplayState state,  Action
         case R_boardEdge(true): {y = dir:=northFacing()? 0: game.board.height; yType = R_int();}
         case R_boardEdge(false): {y = dir:=northFacing()?  game.board.height:0; yType = R_int();}
       }
-      //println("EvalLocation: x:<x>, y:<y> <xType> <yType>");
       return R_location( x, y, xType, yType);}
     case R_location( (RuleLogic) logic):{
       switch(logic){

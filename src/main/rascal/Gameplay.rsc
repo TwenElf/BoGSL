@@ -74,7 +74,6 @@ list[AvailableMove] availableMoves(GameDef game, GameplayState state, str player
       if (isInsideBoard(game.board, after.x, after.y));{
         switch (piece.moves[moveId]){
           case moveDef(str _, list[Step] _, RuleDef rule): {
-            println("Checking for moveDef rule <rule>");
             if (!checkSingleRule(game, state, rule ,actionDef(pieceId, moveId))) continue;}// if the rule evaluates false it should not show up.
         }
  
