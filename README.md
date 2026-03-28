@@ -57,9 +57,10 @@ import Parser;
 parseGameFile(|cwd:///example/chess.dsl|);
 ```
 
-`example/basic.dsl`, `example/chess.dsl`, and `example/line.dsl` are valid end-to-end examples.
-`example/chess.dsl` is a chess-like demo (white/black turn loop, one game rule, one piece rule: `enPassant` on `pawn`, and explicit per-player piece placement).
+`example/chess.dsl` and `example/line.dsl` are valid end-to-end examples.
+`example/chess.dsl` is a chess-like demo (white/black turn loop, a `rules` block with three game-level Movement rules, movement-level inline rules on several pawn moves, and explicit per-player piece placement).
 `example/line.dsl` is the minimal example: a single piece moving forward along a 1×5 board until it falls off.
+`example/basic.dsl` uses older `rule: <ID>` syntax at the game and piece level; it is kept for reference but does not parse with the current grammar.
 
 `parseGameFile` and `parseGame` both:
 - trim input before parsing
@@ -246,6 +247,7 @@ actions: [
 - available move computation (`availableMoves`) currently checks:
   - move belongs to one of the current player's assigned pieces (using all moves defined by each piece type)
   - target position is inside board limits
+  - any movement-level rule attached to the move is satisfied
 
 ### `Machine` is composed of
 - `[ StateNode, StateNode, ... ]`
@@ -276,25 +278,64 @@ flow: {
 }
 ```
 
-### `GameRuleProperty` is composed of
-- `rule: <ID>`
+### `Rules` block (game-level rules)
 
-### `PieceRuleProperty` is composed of
-- `rule: <ID>`
+Declared as a top-level `GameProperty`:
+- `rules: { Rule, Rule, ... }`
+- supports empty block (`rules: {}`) and optional trailing comma
 
-Examples:
+### `Rule` is composed of
+- `rule <RuleType> <ID> : <RuleParts>`
+- `RuleType` is one of `Movement`, `StartTurn`, `EndTurn`
+- `RuleParts` is a rule logic expression (see below)
+
+Example:
 ```dsl
-rule: boardBounds
-rule: oneActionPerTurn
-```
-
-```dsl
-piece pawn: {
-  rule: pawnForwardOnly,
-  rule: pawnCaptureDiagonally,
-  move advance1: {forward 1}
+rules: {
+  rule Movement captureOnMoveOver: move piece current -> other player piece any,
+  rule Movement captureKing: move piece current -> location{piece id:wK},
+  rule Movement promote: move piece current -> location{x: any, y: opposite boardedge}
 }
 ```
+
+### Movement-level inline rules
+
+A rule can be attached directly to a move definition inside a `Piece`:
+- `move <MoveID>: { ... } rule <RuleType> <ID> : <RuleParts>`
+
+Example:
+```dsl
+piece pawn: {
+  move advance1: {forward 1},
+  move firstMove: {forward 2} rule Movement firstMovePawn : location{ piece current } == location{ piece current initial },
+  move captureL: {left 1, forward 1} rule Movement captureL: move piece current -> location{ opponent piece any}
+}
+```
+
+### `RuleParts` (rule logic expressions)
+
+Supported expressions:
+- `move piece current` — the moving piece
+- `move piece any` — any piece
+- `other player piece any` — any opponent piece
+- `location{ x: <Int|any|boardedge|opposite boardedge>, y: <Int|any|boardedge|opposite boardedge> }` — absolute coordinate location
+- `location{ piece current }` — current location of the moving piece
+- `location{ piece current initial }` — initial location of the moving piece
+- `location{ opponent piece any }` — location of any opponent piece
+- `location{ piece id:<ID> }` — location of a specific named piece
+- `<left> -> <right>` — movement from left location to right location
+- `<left> == <right>` — equality comparison
+- `<left> != <right>` — inequality comparison
+- `<left> and <right>` / `<left> && <right>` — logical AND
+- `<left> || <right>` — logical OR
+- `not(<expr>)` / `!(<expr>)` — logical NOT
+- `capture <ID>` — capture a piece by type ID
+
+### `PieceRuleProperty` (piece-level rule reference)
+- `rule: <ID>` inside a piece definition
+- declares that the piece is subject to a named rule (defined in the `rules` block)
+
+Note: the `rule: <ID>` piece-level reference syntax is defined in the grammar (`PieceRuleProperty`) and extracted by `ToModel.rsc`, but is not yet wired into `PieceProperty` in the current grammar; this feature is under development.
 
 ## Full example
 ```dsl
@@ -330,12 +371,10 @@ game: {
   board: {width: 8, height: 8},
   chest: [
     piece pawn: {
-      rule: pawnForwardOnly,
       move fwd: {forward 1},
-      move fwd2: {forward 2}
+      move fwd2: {forward 2} rule Movement firstMoveOnly : location{ piece current } == location{ piece current initial }
     },
     piece horse: {
-      rule: horseLMove,
       move fwdR: {forward 2, right 1},
       move rightDown: {backward 1, right 2},
       move none: {}
@@ -362,7 +401,8 @@ game: {
       state gameOver: {}
     ]
   },
-  rule: mustMoveInBounds,
-  rule: oneActionPerTurn
+  rules: {
+    rule Movement captureOnMove: move piece current -> other player piece any
+  }
 }
 ```

@@ -57,6 +57,8 @@ These checks throw during parse-tree -> AST mapping:
 - Direction/facing keywords must be known (`forward/backward/left/right`, `north/south/east/west`).
 - Every action must define both piece ID and move ID.
 - Every game rule and piece rule must define a rule ID.
+- Every rule must have a known `RuleType` (`Movement`, `StartTurn`, or `EndTurn`); an unknown type throws a conversion error.
+- Movement-level inline rules (attached to a move definition) follow the same `rule <RuleType> <ID> : <RuleParts>` form.
 
 ## 4. Semantic Checks (`Checks.rsc`)
 
@@ -94,9 +96,9 @@ These checks throw during parse-tree -> AST mapping:
 - `UnreachableFlowEnd(startState, endState)`: end cannot be reached from start.
 
 ### Rules
-- `DuplicateGameRule(ruleId)`: duplicate game-level rule ID.
-- `DuplicatePieceRule(pieceId, ruleId)`: duplicate piece rule ID for one piece type.
-- `UnknownPieceRulePiece(pieceId, ruleId)`: piece rule references unknown piece type.
+- `DuplicateGameRule(ruleId)`: duplicate rule ID across all non-piece rules (`moveRuleDef`, `startTurnRuleDef`, `endTurnRuleDef`, `gameRuleDef`).
+- `DuplicatePieceRule(pieceId, ruleId)`: duplicate piece-level rule reference ID for one piece type.
+- `UnknownPieceRulePiece(pieceId, ruleId)`: piece-level rule reference targets an unknown piece type.
 
 ## 5. Final Failure Condition
 

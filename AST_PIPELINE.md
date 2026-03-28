@@ -19,12 +19,18 @@ Pipeline:
 - `PieceDef(name, moves)`
 - `PieceAssignmentDef(playerId, pieceId, typeId, direction, initialPosition)`
 - `PositionDef(x, y)`
-- `MoveDef(name, steps)`
+- `MoveDef(name, steps)` or `MoveDef(name, steps, rule)` (when an inline movement rule is attached)
 - `ActionDef(pieceId, moveId)`
 - `FlowDef` (`flowDef(startState, endState, states)`)
 - `StateDef(name, transitions)`
 - `TransitionDef(event, toState)`
-- `RuleDef` (`gameRuleDef(ruleId)`, `pieceRuleDef(pieceId, ruleId)`)
+- `RuleDef`:
+  - `gameRuleDef(ruleId, logic)` — named game-level rule (from `rules` block, no type tag)
+  - `moveRuleDef(ruleId, logic)` — `Movement` rule (game-level or movement-level)
+  - `startTurnRuleDef(ruleId, logic)` — `StartTurn` rule
+  - `endTurnRuleDef(ruleId, logic)` — `EndTurn` rule
+  - `pieceRuleDef(pieceId, ruleId)` — piece-level reference to a named rule
+- `RuleLogic` — recursive rule logic expression tree (see `Model/Rule.rsc`)
 - `Facing` (`northFacing`, `southFacing`, `eastFacing`, `westFacing`)
 - `Step` (`forwardStep`, `backwardStep`, `leftStep`, `rightStep`)
 
@@ -43,8 +49,9 @@ What it does:
 - extracts first `Board`, `Chest`, and `Players` subtree
 - extracts optional `Actions` subtree (defaults to empty action list if absent)
 - extracts required `Flow` subtree
-- extracts game-wide rules from top-level `GameRuleProperty` (`rule: <ID>`)
-- extracts piece-wide rules from `PieceRuleProperty` inside each piece (`rule: <ID>`)
+- extracts game-level rules from the `rules: { ... }` block (`Rule` nodes with `RuleType` and `RuleParts`)
+- extracts movement-level inline rules from `Rule` nodes attached to individual `Movement` definitions
+- extracts piece-level rule references from `PieceRuleProperty` nodes (`rule: <ID>`) inside each piece
 - maps board integers to `BoardDef`
 - maps every `Piece` (type) to `PieceDef`
 - maps every `PlayerDefinition` `id` to the `players` list
@@ -54,7 +61,8 @@ What it does:
 - maps each `Action` to `ActionDef`
 - maps each `FlowState` to `StateDef`
 - maps each state transition edge (`event -> target`) to `TransitionDef`
-- maps game-wide and piece-wide rule properties to `RuleDef`
+- maps game-level and movement-level `Rule` trees to `RuleDef` (with full `RuleLogic`)
+- maps piece-level `PieceRuleProperty` references to `pieceRuleDef`
 - throws explicit conversion errors when required parse-tree parts are missing
 
 What it intentionally does not do:
@@ -158,4 +166,4 @@ errs = checkGameModelFile(|cwd:///example/chess.dsl|);
 
 `g` contains the normalized game model.
 `errs` contains all semantic errors found in that model.
-Use `example/chess.dsl` for a chess-like sample covering node-based flow, one game rule, `enPassant` as a piece rule on `pawn`, and explicit per-player piece placement.
+Use `example/chess.dsl` for a chess-like sample covering node-based flow, a `rules` block with three game-level Movement rules, movement-level inline rules on pawn moves, and explicit per-player piece placement.
