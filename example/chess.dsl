@@ -5,12 +5,47 @@ game: {
       wP1: {
         type pawn
         direction: south
-        initialPosition: {x: 1, y: 6}
+        initialPosition: {x: 0, y:1}
+      },
+      wP2: {
+        type pawn
+        direction: south
+        initialPosition: {x: 1, y:1}
+      },
+      wP3: {
+        type pawn
+        direction: south
+        initialPosition: {x: 2, y:1}
+      },
+      wP4: {
+        type pawn
+        direction: south
+        initialPosition: {x: 3, y:1}
+      },
+      wP5: {
+        type pawn
+        direction: south
+        initialPosition: {x: 4, y:1}
+      },
+      wP6: {
+        type pawn
+        direction: south
+        initialPosition: {x: 5, y:1}
+      },
+      wP7: {
+        type pawn
+        direction: south
+        initialPosition: {x: 6, y:1}
+      },
+      wP8: {
+        type pawn
+        direction: south
+        initialPosition: {x: 7, y:1}
       },
       wK: {
         type king
         direction: south
-        initialPosition: {x: 4, y: 0}
+        initialPosition: {x: 4, y:0}
       }
     },
     id: black,
@@ -47,9 +82,9 @@ game: {
     piece pawn: {
       move advance1: {forward 1},
       move firstMove: {forward 2},
-      move captureL: {left 1, forward 1},
-      move captureR: {right 1, forward 1},
-      move enPassantCapture: {left 1, forward 1} rule Movement enPassant: move piece current-> location{ opponent piece any}
+      move captureL: {left 1, forward 1} rule Movement captureL: move piece current-> location{ opponent piece any},
+      move captureR: {right 1, forward 1} rule Movement captureR: move piece current-> location{ opponent piece any},
+      move enPassantCapture: {left 1, forward 1}
     },
     piece king: {
       move stepF: {forward 1},

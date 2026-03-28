@@ -80,17 +80,30 @@ private bool checkGameRule(GameDef game,  GameplayState state , ActionDef action
   <moveToX, MoveToY> = calcMovement(game,state,action, left);
   switch(right){
     case R_location(_,_,_,_):right = ruleEvalLocation( game,  state,  action,  right);
+    case R_location(_):right = ruleEvalLocation( game,  state,  action,  right);
   }
+  
   switch(right){
-    case R_location(int x, int y, R_int(), R_int()): return (moveToX == x && MoveToY == y); // check location directly
-    case R_location(int x, int _, R_int(), R_any()): return (moveToX == x); // One of the locations is any possible location
-    case R_location(int _, int y, R_any(), R_int()): return (MoveToY == y); // One of the locations is any possible location
-    case R_location(int _, int y, R_any(), R_any()): return (true); // if both are any it will always be true
+    case R_location(list[RuleLogic] locations): {
+      for(loca <- locations){
+        if(compareLocations( moveToX,  MoveToY,  loca)) return true;
+      }
+      return false;
+    }
+    default: return compareLocations( moveToX,  MoveToY,  right);
   }
   return false;
 }
 
-
+private bool compareLocations(int moveToX, int MoveToY, RuleLogic right){
+    switch(right){
+    case R_location(int x, int y, R_int(), R_int()): return (moveToX == x && MoveToY == y); // check location directly
+    case R_location(int x, int _, R_int(), R_any()): return (moveToX == x); // One of the locations is any possible location
+    case R_location(int _, int y, R_any(), R_int()): return (MoveToY == y); // One of the locations is any possible location
+    case R_location(int _, int y, R_any(), R_any()): return (true); // if both are any it will always be true
+    default: throw "unexpected location compared <right>";
+  }
+}
 
 // does the same actions as DoAction to determine the movement that the current piece will do
 // returns the location the piece will end up in
@@ -119,15 +132,34 @@ private RuleLogic ruleEvalLocation(  GameDef game,  GameplayState state,  Action
         case R_boardEdge(false): {y = dir:=northFacing()?  game.board.height:0; yType = R_int();}
       }
       return R_location( x, y, xType, yType);}
+    // determine the location(s) listed
     case R_location( (RuleLogic) logic):{
       switch(logic){
         case R_pieceRef(id): if (id in state.pieces){
           return R_location(state.pieces[id].x,state.pieces[id].y,R_int(),R_int());
           }
+        // get all pieces.
+        case R_anyPiece(): {
+          list[RuleLogic] locations = []; 
+          for (pieceid <- state.pieces){
+            locations = locations + R_location(state.pieces[pieceid].x,state.pieces[pieceid].y,R_int(),R_int());
+          }
+          return R_location(locations);
+        }
+        // get all the pieces of the opponent
+        case R_oppponent(R_anyPiece()): {
+          map[str, str] ownerByPiece = (assignment.pieceId: assignment.playerId | PieceAssignmentDef assignment <- game.assignedPieces);
+          str playerId = ownerByPiece[action.pieceId];
+          list[RuleLogic] locations = []; 
+          for (pieceId <- state.pieces){
+            if((pieceId in ownerByPiece) && ownerByPiece[pieceId] != playerId)
+            {locations = locations + R_location(state.pieces[pieceId].x,state.pieces[pieceId].y,R_int(),R_int());}
+          }
+          return R_location(locations);
+        } 
 
       }
       return R_false;
-      // TODO: Implement the switches for opponent pieces
     }
     default:
       throw "expected R_location";
