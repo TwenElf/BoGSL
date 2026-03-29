@@ -6,13 +6,14 @@ import util::Maybe;
 import ParseTree;
 import Message;
 import analysis::diff::edits::TextEdits;
+import String;
 
 import Syntax;
 import ToModel;
 import Model;
 import Checks;
 
-private start[Game] parserService(str s, loc l) = parse(#start[Game], s, l);
+private Tree (str _input, loc _origin) parserService() = parser(#start[Game], allowRecovery=true);
 
 // Return the location in `Maybe`, or use the default.
 private loc getLocation(Maybe[loc] l, loc \default) {
@@ -118,10 +119,56 @@ private Summary analysisService(loc l, start[Game] g) {
   );
 }
 
+// Give completion suggestions.
+private list[CompletionItem] completionService(Focus focus, int cursorOffset, CompletionTrigger trigger) {
+  Tree t = focus[0];
+  str prefix = "<t>"[..cursorOffset];
+  int cc = t.src.begin.column + cursorOffset;
+
+  bool isTypingId = false;
+  try {
+    if (prefix != "" && trim(prefix) == prefix) {
+      parse(#ID, prefix);
+      isTypingId = true;
+    }
+  } catch ParseError(_): {;}
+
+  set[str] keywords = {
+    "game", "chest", "actions", "board", "piece", "direction", "move",
+    "north", "south", "east", "west", "forward", "backward", "left", "right",
+    "action", "ID", "flow", "start", "end", "gameOver", "moved", "noMoves",
+    "players", "id", "pieces", "type", "initialPosition", "machine", "state",
+    "rule", "current", "any", "capture", "move", "piece"
+  };
+
+  Tree g = focus[-1];
+  rel[str, CompletionItemKind, str] defs
+    = {<"<player>", \variable(), "player"> | /PlayerIdProperty playerId := g, /PlayerName player := playerId}
+    + {<"<piece>", \variable(), "piece"> | /AssignedPiece piece := g}
+    + {<"<id>", \variable(), "chest piece"> | /(Piece)`piece <ID id> : { <{PieceProperty ","}* _> }` := g}
+    + {<"<move>", \variable(), "move"> | /PieceProperty piece := g, /MoveID move := piece}
+    + {<kw, \constant(), "keyword"> | kw <- keywords}
+    ;
+  map[CompletionItemKind, str] kindSort = (\variable(): "a", \constant(): "b");
+
+  return [
+    completionItem(
+      kind,
+      isTypingId
+        ? completionEdit(t.src.begin.column, cc, t.src.end.column, name)
+        : completionEdit(cc, cc, cc, name),
+      name,
+      labelDetail = " <label>",
+      sortText = kindSort[kind] + label + name
+    ) | <name, kind, label> <- defs
+  ];
+}
+
 set[LanguageService] languageServices() = {
-  parsing(parserService),
+  parsing(parserService()),
   analysis(analysisService),
-  rename(renameService, prepareRenameService = renamePreparingService)
+  rename(renameService, prepareRenameService = renamePreparingService),
+  completion(completionService)
 };
 
 int main() {
