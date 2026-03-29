@@ -409,31 +409,3 @@ game: {
   }
 }
 ```
-## Semantic error reference table
-| Error | Parameters | Description |
-|---|---|---|
-| `DuplicatePiece` | `pieceTypeId` | A piece type is defined more than once |
-| `DuplicateMove` | `pieceTypeId`, `moveId` | A move is defined more than once for a piece type |
-| `DuplicateAssignedPiece` | `pieceId` | A piece instance is assigned more than once |
-| `UnknownAssignedPiecePlayer` | `pieceId`, `playerId` | An assigned piece references a non-existent player |
-| `UnknownAssignedPieceType` | `pieceId`, `typeId` | An assigned piece references a non-existent piece type |
-| `DuplicateAssignedPiecePosition` | `pieceId`, `x`, `y` | Two assigned pieces share the same board position |
-| `AssignedPieceOutOfBounds` | `pieceId`, `x`, `y`, `width`, `height` | An assigned piece is placed outside the board boundaries |
-| `MissingPlayers` | — | No players are defined |
-| `DuplicatePlayer` | `playerId` | A player is defined more than once |
-| `UnknownActionPiece` | `pieceId` | An action references a non-existent piece |
-| `UnknownActionMove` | `pieceId`, `moveId` | An action references a non-existent move for a piece |
-| `DuplicateFlowState` | `stateId` | A flow state is defined more than once |
-| `InvalidFlowStateActor` | `stateId` | A flow state references an invalid actor |
-| `InvalidFlowStartPlayer` | `stateId` | A flow state has an invalid starting player |
-| `InvalidFlowEndState` | `stateId` | A flow state is an invalid end state |
-| `AmbiguousFlowEventTransition` | `fromState`, `event` | Multiple transitions exist for the same state/event pair |
-| `MissingFlowEventTransition` | `fromState`, `event` | No transition exists for an expected state/event pair |
-| `DuplicateFlowTransition` | `fromState`, `event`, `toState` | A flow transition is defined more than once |
-| `UnknownFlowStart` | `stateId` | The flow start state does not exist |
-| `UnknownFlowEnd` | `stateId` | The flow end state does not exist |
-| `UnknownFlowTransitionTarget` | `fromState`, `toState` | A transition targets a non-existent state |
-| `UnreachableFlowEnd` | `startState`, `endState` | The end state is unreachable from the start state |
-| `DuplicateGameRule` | `ruleId` | A game rule is defined more than once |
-| `DuplicatePieceRule` | `pieceId`, `ruleId` | A piece rule is defined more than once for a piece |
-| `UnknownPieceRulePiece` | `pieceId`, `ruleId` | A piece rule references a non-existent piece |
