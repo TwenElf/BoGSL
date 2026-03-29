@@ -223,7 +223,7 @@ syntax RuleType
 
 syntax RuleParts
   =  RuleParts Logicals RuleParts
-  >  RuleParts Arrow RuleParts// reusing arrow for move to
+  >  RuleParts Arrow RuleParts
   > "(" RuleParts ")"
   | "not" "(" RuleParts ")"
   | "!" "(" RuleParts ")"
@@ -231,8 +231,7 @@ syntax RuleParts
   | "move" "piece" "current"
   | "other" "player" "piece" "any"
   | "other" "player" "piece" "current"
-  //| "other" "player" "piece"  ID  // TODO: make this work
-  //| "piece"  Determs
+  //| "other" "player" "piece"  ID  
   | "boardsize" 
   | "capture" ID
   | "capture" "any"
@@ -242,10 +241,8 @@ syntax RuleParts
   ;
 
 
-lexical Logicals
-  =  "\<=" // TODO: Implement
-  | "\>=" // TODO: Implement
-  | "=="
+lexical Logicals  
+  = "=="
   | "!="
   | "and"
   | "or"
@@ -272,14 +269,20 @@ syntax RuleLocations
   | "{" "piece" "current" InitialOpt "}"
   | "{" "opponent" "piece" "any" "}"
   | "{" "piece" "id:" ID InitialOpt "}"
+  | "{" RuleMovement "}"
   ;
 
 syntax InitialOpt
   = "initial"
   | /* empty */
   ;
+
 syntax LexicalLocations
   = "boardedge"
   | "opposite" "boardedge"
   | "any"
+  ;
+
+syntax RuleMovement
+  =   Direction? ("," Direction)* 
   ;

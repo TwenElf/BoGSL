@@ -35,15 +35,7 @@ public bool checkRules(GameDef game, GameplayState state, ActionDef action) {
         case moveRuleDef(str ruleId, RuleLogic logic): results = results +  (  ruleId:  checkGameRule(game,state,action, logic));
     }
   }
-  // for( res <- results){
-  //   if(results[res] == true){
-  //     println( "<res> is true for action <action>");
-  //   }
-  //   else{
-  //      println( "<res> is false for action <action>");
-  //   }
-  // }
-  
+
   return true;
 }
 
@@ -58,10 +50,7 @@ public bool checkSingleRule(GameDef game, GameplayState state, RuleDef rule ,Act
 
 
 
-private bool checkGameRule(GameDef game, RuleLogic rule) {
-  return true;
-}
-
+// Checks whether a rule equality condition (R_eq) holds between two operands
 private bool checkGameRule(GameDef game,  GameplayState state , ActionDef action, R_eq( left,  right)){
   switch([left, right]){
     case[R_location(RuleLogic _, bool _), R_location(RuleLogic _, bool _)]: {
@@ -112,9 +101,9 @@ private bool checkGameRule(GameDef game,  GameplayState state , ActionDef action
 private bool compareLocations(int moveToX, int MoveToY, RuleLogic right){
     switch(right){
     case R_location(int x, int y, R_int(), R_int()): return (moveToX == x && MoveToY == y); // check location directly
-    case R_location(int x, int _, R_int(), R_any()): return (moveToX == x); // One of the locations is any possible location
-    case R_location(int _, int y, R_any(), R_int()): return (MoveToY == y); // One of the locations is any possible location
-    case R_location(int _, int y, R_any(), R_any()): return (true); // if both are any it will always be true
+    case R_location(int x, int _, R_int(), R_any()): return (moveToX == x);                 // One of the locations is any possible location
+    case R_location(int _, int y, R_any(), R_int()): return (MoveToY == y);                 // One of the locations is any possible location
+    case R_location(int _, int y, R_any(), R_any()): return (true);                         // if both are any it will always be true
     default: throw "unexpected location compared <right>";
   }
 }
