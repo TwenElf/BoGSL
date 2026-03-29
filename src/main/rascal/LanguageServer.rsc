@@ -12,6 +12,7 @@ import Syntax;
 import ToModel;
 import Model;
 import Checks;
+import Parser;
 
 private Tree (str _input, loc _origin) parserService() = parser(#start[Game], allowRecovery=true);
 
@@ -98,12 +99,17 @@ private loc renamePreparingService(Focus focus) {
 }
 
 // Analyze the code for errors, definitions and references.
-private Summary analysisService(loc l, start[Game] g) {
-  list[SemanticErrorAt] errors = [];
+Summary analysisService(loc l, start[Game] g) {
+  list[tuple[str, Maybe[loc]]] errors = [];
 
   if ((start[Game])`<Game nonstart>` := g) {
-    GameDef game = toModel(nonstart);
-    errors += checkSemantics(game);
+    try {
+      GameDef game = toModel(nonstart);
+      errors += [<"<currentError>", at> | <currentError, at> <- checkSemantics(game)];
+    } catch s: {
+      errors += [<s, nothing()>];
+      parseError = true;
+    }
   }
 
   rel[loc, loc] definitions
@@ -113,7 +119,7 @@ private Summary analysisService(loc l, start[Game] g) {
     + moveDefinitions(g);
 
   return summary(l,
-    messages = {<getLocation(at, g.src), error("<currentError>", getLocation(at, g.src))> | <currentError, at> <- errors},
+    messages = {<getLocation(at, g.src), error(currentError, getLocation(at, g.src))> | <currentError, at> <- errors},
     definitions = definitions,
     references = symmetricClosure(definitions)*
   );
